@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createRequire } from "node:module";
 import { Window } from "happy-dom";
+import { t, dictionaryFor } from "../src/i18n";
 // @ts-expect-error Plain-JS webview module intentionally has no TS build step.
 import {
   applyDraft,
@@ -37,6 +38,9 @@ function harness(options?: {
   onMaximizedChanged?: (max: boolean) => void;
 }) {
   const window = new Window({ url: "https://example.test/" });
+  (globalThis as any).window = window;
+  (window as any).__I18N = { locale: "en", dict: dictionaryFor("en"), locales: ["en", "zh-CN"] };
+  (window as any).t = (k: string, v?: Record<string, string | number>) => t("en", k, v as any);
   const document = window.document;
   const scopes = {
     a: { id: "scope-a", label: "app", title: "/work/app" },
@@ -429,6 +433,9 @@ describe("shared file-panel component", () => {
 
   it("uses overlay presentation while the responsive dock host is display-none", async () => {
     const window = new Window({ url: "https://example.test/" });
+    (globalThis as any).window = window;
+    (window as any).__I18N = { locale: "en", dict: dictionaryFor("en"), locales: ["en", "zh-CN"] };
+    (window as any).t = (k: string, v?: Record<string, string | number>) => t("en", k, v as any);
     const document = window.document;
     const panelHost = document.createElement("main");
     const dockHost = document.createElement("aside");
@@ -662,6 +669,9 @@ describe("shared file-panel component", () => {
     // to the minimum, and one drag strands the panel at 200px with no way to
     // widen it again.
     const window = new Window({ url: "https://example.test/" });
+    (globalThis as any).window = window;
+    (window as any).__I18N = { locale: "en", dict: dictionaryFor("en"), locales: ["en", "zh-CN"] };
+    (window as any).t = (k: string, v?: Record<string, string | number>) => t("en", k, v as any);
     const document = window.document;
     // happy-dom has no layout engine; these are the only measurements
     // setPanelWidth reads.

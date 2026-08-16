@@ -19,6 +19,7 @@
 import { isPrimerText } from "./grok-primer";
 import type { HostMsg } from "./protocol";
 import { unwrapExtResult } from "./worktree";
+import { t, type Locale } from "./i18n";
 
 export function historyEventCount(messages: readonly HostMsg[]): number {
   return messages.reduce(
@@ -358,19 +359,18 @@ export function anyFilesAfter(allPoints: RewindPoint[], target: RewindPoint): bo
 
 /** Confirm for the Edit flow — different stakes from a plain rewind, so it says
  *  what comes back rather than only what is lost. */
-export function editRewindConfirmMessage(target: RewindPoint, hasFileChanges: boolean): string {
+export function editRewindConfirmMessage(locale: Locale, target: RewindPoint, hasFileChanges: boolean): string {
   return (
-    `Edit your last message?\n\n` +
-    `It will be removed from the conversation and put back in the composer so you can change it and send again.\n\n` +
+    t(locale, "chat.confirm.editRewindBody") +
     (hasFileChanges
-      ? "Grok's reply to it will be discarded and any files it changed in that turn will be restored.\n"
-      : "Grok's reply to it will be discarded. Earlier messages are untouched.\n") +
-    `This cannot be undone (unless you have the changes in git).`
+      ? t(locale, "chat.confirm.editRewindFileChanges")
+      : t(locale, "chat.confirm.editRewindNoFileChanges")) +
+    t(locale, "chat.confirm.cannotUndoGit")
   );
 }
 
 /** Confirm dialog body for a chosen target. */
-export function rewindConfirmMessage(p: RewindPoint, mode: RewindMode = "all"): string {
+export function rewindConfirmMessage(locale: Locale, p: RewindPoint, mode: RewindMode = "all"): string {
   const preview = (p.promptPreview || "(empty)").replace(/\s+/g, " ").trim();
   const clipped = preview.length > 120 ? preview.slice(0, 117) + "…" : preview;
   // Execute DISCARDS the target turn as well as everything after it — the old
@@ -378,14 +378,14 @@ export function rewindConfirmMessage(p: RewindPoint, mode: RewindMode = "all"): 
   // wire. See resolveEditRewindTarget + research/rewind-semantics-probe.cjs.
   const scope =
     mode === "conversation_only"
-      ? "This message and everything after it will be discarded from the conversation."
+      ? t(locale, "chat.confirm.rewindScopeConversation")
       : mode === "files_only" || mode === "code_only"
-        ? "Files will be restored to the snapshot taken before this turn; conversation stays."
-        : "This message and everything after it will be discarded, and files restored to the snapshot taken before it.";
+        ? t(locale, "chat.confirm.rewindScopeFiles")
+        : t(locale, "chat.confirm.rewindScopeAll");
   return (
-    `Rewind to this message?\n\n` +
+    t(locale, "chat.confirm.rewindBodyTitle") +
     `"${clipped}"\n\n` +
     `${scope}\n` +
-    `This cannot be undone (unless you have the changes in git).`
+    t(locale, "chat.confirm.cannotUndoGit")
   );
 }

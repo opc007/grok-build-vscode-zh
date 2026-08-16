@@ -4,6 +4,7 @@ import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GrokSidebar } from "../src/sidebar";
 import { Session } from "../src/session";
+import { en } from "../src/i18n";
 import {
   CLI_VERSION_CACHE_KEY,
   PLAN_MODE_UNVERIFIED_REASON,
@@ -94,12 +95,15 @@ describe("CLI startup compatibility", () => {
 
   it("fails closed for Plan when the installed version cannot be verified, without latching", () => {
     expect(compatibility).toContain("planModeVersionVerified: false");
-    expect(compatibility).toContain("Continuing best-effort with the current binary");
+    // Unverified body/log message is surfaced via the localized key.
+    expect(compatibility).toContain('chat.warn.cliVersionUnverifiedFull');
     expect(compatibility).toContain("planModeAvailable: false");
     // Unverified copy must not lead with the "requires X or newer" floor line alone.
-    expect(compatibility).toMatch(/Could not verify the Grok CLI version/);
-    expect(compatibility).toMatch(/failed or timed out/);
-    expect(compatibility).toMatch(/reload the window to retry/);
+    // The wording now lives in the dictionary, so assert it there.
+    const unverified = en["chat.warn.cliVersionUnverifiedFull"];
+    expect(unverified).toMatch(/Could not verify the Grok CLI version/);
+    expect(unverified).toMatch(/failed or timed out/);
+    expect(unverified).toMatch(/reload the window to retry/);
     // A later Plan pick re-probes instead of forcing a session restart (#105).
     expect(setMode).toContain("!session.planModeVersionVerified");
     expect(setMode).toContain("this.recheckPlanModeAvailability(session)");
@@ -112,7 +116,7 @@ describe("CLI startup compatibility", () => {
   });
 
   it("does not treat a cache substitute as a verified Plan decision", () => {
-    expect(compatibility).toContain("using last verified version for Plan mode");
+    expect(compatibility).toContain('chat.warn.usingCachedPlanVersion');
     expect(compatibility).toContain("planModeVersionVerified: decision.verified");
     expect(setMode).toContain("!session.planModeVersionVerified");
     expect(setMode).toContain("this.recheckPlanModeAvailability(session)");

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { GrokSidebar } from "../src/sidebar";
+import { en } from "../src/i18n";
 import { RemoteClientState } from "../src/remote-client-state";
 import { Session } from "../src/session";
 import type { HostMsg } from "../src/protocol";
@@ -26,7 +27,7 @@ function makeSidebar(update: () => Promise<void> = async () => {}): any {
     }),
   };
   sidebar.host = {
-    showWarningMessage: vi.fn(async () => "Sign Out"),
+    showWarningMessage: vi.fn(async () => en["common.signOut"]),
     showErrorMessage: vi.fn(async () => undefined),
     createTerminal: vi.fn(() => ({ show: vi.fn(), sendText: vi.fn() })),
     appendLine: vi.fn(),

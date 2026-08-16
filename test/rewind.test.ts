@@ -171,7 +171,7 @@ describe("selectableRewindPoints / labels", () => {
   });
 
   it("builds a confirm message for the target bubble", () => {
-    const msg = rewindConfirmMessage(pts[1], "all");
+    const msg = rewindConfirmMessage("en", pts[1], "all");
     expect(msg).toMatch(/Rewind to this message/i);
     expect(msg).toContain("beta");
     expect(msg).toMatch(/discarded|restored/i);
@@ -312,10 +312,10 @@ describe("resolveEditRewindTarget (#56)", () => {
   });
 
   it("confirm text promises the message comes back, and names files only when there are some", () => {
-    const withFiles = editRewindConfirmMessage({ ...three, hasFileChanges: true }, true);
+    const withFiles = editRewindConfirmMessage("en", { ...three, hasFileChanges: true }, true);
     expect(withFiles).toContain("put back in the composer");
     expect(withFiles).toContain("files it changed in that turn will be restored");
-    const noFiles = editRewindConfirmMessage(three, false);
+    const noFiles = editRewindConfirmMessage("en", three, false);
     expect(noFiles).toContain("Earlier messages are untouched");
     expect(noFiles).not.toContain("files it changed");
   });
@@ -335,14 +335,14 @@ describe("rewindConfirmMessage matches the wire's discard semantics", () => {
 
   it("says THIS message goes too, not just what follows", () => {
     for (const mode of ["all", "conversation_only"] as const) {
-      const msg = rewindConfirmMessage(p, mode);
+      const msg = rewindConfirmMessage("en", p, mode);
       expect(msg).toContain("This message and everything after it");
       expect(msg).not.toMatch(/after this turn will be discarded/i);
     }
   });
 
   it("files-only still leaves the conversation alone", () => {
-    expect(rewindConfirmMessage(p, "files_only")).toContain("conversation stays");
+    expect(rewindConfirmMessage("en", p, "files_only")).toContain("conversation stays");
   });
 });
 

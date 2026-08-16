@@ -338,11 +338,11 @@
       const cancel = document.createElement("button");
       cancel.type = "button";
       cancel.className = "rail-dialog-btn";
-      cancel.textContent = "Cancel";
+      cancel.textContent = window.t("common.cancel");
       const ok = document.createElement("button");
       ok.type = "button";
       ok.className = "rail-dialog-btn rail-dialog-primary" + (opts.danger ? " rail-dialog-danger" : "");
-      ok.textContent = opts.confirmLabel || "OK";
+      ok.textContent = opts.confirmLabel || window.t("common.ok");
       actions.appendChild(cancel);
       actions.appendChild(ok);
       box.appendChild(actions);
@@ -447,7 +447,7 @@
     const picker = document.createElement("div");
     picker.className = "rail-color-picker";
     picker.setAttribute("role", "listbox");
-    picker.setAttribute("aria-label", "Project color");
+    picker.setAttribute("aria-label", window.t("chat.projectColorAria"));
     for (const sw of REPO_COLOR_SWATCHES) {
       const btn = document.createElement("button");
       btn.type = "button";
@@ -569,7 +569,7 @@
         (s) => matchesFilter(s.displayName) || matchesFilter(repoLabelFor(s.cwd)),
       );
       if (pinned.length) {
-        root.appendChild(staticGroupHead("Pinned"));
+        root.appendChild(staticGroupHead(window.t("chat.rail.pinnedGroup")));
         const list = document.createElement("div");
         list.className = "rail-list rail-pinned";
         for (const s of pinned) {
@@ -592,7 +592,7 @@
       const forcedOpen = !!q;
       const open = forcedOpen || !state.groupCollapsed.recent;
       root.appendChild(collapsibleGroupHead({
-        title: "Recent",
+        title: window.t("chat.rail.recent"),
         group: "recent",
         open,
         forcedOpenBySearch: forcedOpen,
@@ -622,11 +622,11 @@
       const forcedOpen = !!q;
       const open = forcedOpen || !state.groupCollapsed.projects;
       root.appendChild(collapsibleGroupHead({
-        title: "Projects",
+        title: window.t("chat.rail.projects"),
         group: "projects",
         open,
         forcedOpenBySearch: forcedOpen,
-        openTitle: "Hide projects",
+        openTitle: window.t("chat.rail.hideProjects"),
         closedTitle: "Show projects",
         searchTitle: "Open while your search matches a project",
         action: state.canAddProject ? addProjectButton : undefined,
@@ -650,7 +650,7 @@
       const forcedOpen = !!q;
       const open = forcedOpen || !state.groupCollapsed.archived;
       root.appendChild(collapsibleGroupHead({
-        title: "Project Archive",
+        title: window.t("chat.rail.projectArchive"),
         group: "archived",
         open,
         forcedOpenBySearch: forcedOpen,
@@ -672,7 +672,7 @@
     if (!shown) {
       const note = document.createElement("div");
       note.className = "rail-note";
-      note.textContent = q ? "No matches." : "No projects yet";
+      note.textContent = q ? window.t("chat.rail.noMatches") : window.t("chat.rail.noProjects");
       // An empty rail that only says "No projects yet" is a dead end on the one
       // screen where the user has nothing else to click — and with no group
       // heads rendered, the "+" above has nowhere to be.
@@ -680,7 +680,7 @@
         const add = document.createElement("button");
         add.type = "button";
         add.className = "rail-empty-action";
-        add.textContent = "Add a project folder";
+        add.textContent = window.t("chat.rail.addProjectFolder");
         add.onclick = () => vscode.postMessage({ type: "addProjectFolder" });
         note.appendChild(add);
       }
@@ -752,8 +752,8 @@
     btn.type = "button";
     btn.className = "rail-action-btn rail-add-project";
     btn.innerHTML = ICON.plus;
-    btn.title = "Add project folder";
-    btn.setAttribute("aria-label", "Add project folder");
+    btn.title = window.t("chat.rail.addProjectFolder");
+    btn.setAttribute("aria-label", window.t("chat.rail.addProjectFolder"));
     btn.onclick = (e) => {
       e.stopPropagation();
       vscode.postMessage({ type: "addProjectFolder" });
@@ -773,7 +773,7 @@
       const more = document.createElement("button");
       more.type = "button";
       more.className = "rail-more";
-      more.textContent = "Show more";
+      more.textContent = window.t("chat.action.showMore");
       more.onclick = (e) => {
         e.stopPropagation();
         state.expanded[expandKey] = true;
@@ -785,7 +785,7 @@
       const less = document.createElement("button");
       less.type = "button";
       less.className = "rail-more";
-      less.textContent = "Show less";
+      less.textContent = window.t("chat.action.showLess");
       less.onclick = (e) => {
         e.stopPropagation();
         delete state.expanded[expandKey];
@@ -880,7 +880,7 @@
     head.setAttribute("aria-expanded", String(expanded));
     head.setAttribute(
       "aria-label",
-      (expanded ? "Collapse " : "Expand ") + (repo.label || leaf(repo.cwd)),
+      (expanded ? window.t("chat.rail.collapse") : window.t("chat.rail.expand")) + (repo.label || leaf(repo.cwd)),
     );
 
     const twisty = document.createElement("span");
@@ -901,11 +901,11 @@
     if (opts.isCurrent) {
       const currentTag = document.createElement("span");
       currentTag.className = "rail-current-tag";
-      currentTag.textContent = "Your IDE";
+      currentTag.textContent = window.t("chat.rail.yourIde");
       // Named for what it IS. "Current" read as "the project you are working
       // in", which is a different thing now that history follows the rail — you
       // can be working in another project entirely while the window stays here.
-      currentTag.title = "The folder this VS Code window has open";
+      currentTag.title = window.t("chat.rail.yourIdeTitle");
       name.appendChild(currentTag);
     }
     head.appendChild(name);
@@ -945,7 +945,7 @@
       add.type = "button";
       add.className = "rail-action-btn";
       add.innerHTML = ICON.plus;
-      add.title = "New session";
+      add.title = window.t("chat.composer.newSession");
       add.onclick = (e) => {
         e.stopPropagation();
         // Whatever resume was still in flight is no longer what the user wants.
@@ -960,7 +960,7 @@
     menuBtn.type = "button";
     menuBtn.className = "rail-action-btn";
     menuBtn.innerHTML = ICON.ellipsis;
-    menuBtn.title = "Project actions";
+    menuBtn.title = window.t("chat.rail.projectActions");
     menuBtn.setAttribute("aria-label", menuBtn.title);
     const getMenuItems = () => {
       const items = [];
@@ -975,8 +975,8 @@
       // run there, and archive is how those are put away.
       if (repo.added) {
         items.push({
-          label: "Hide project",
-          title: "Take this project out of the list. Nothing is deleted — the folder stays on disk, and + adds it back.",
+          label: window.t("chat.rail.hideProject"),
+          title: window.t("chat.rail.hideProjectTitle"),
           onSelect: async () => {
             const ok = await railDialog({
               title: `Hide “${repo.label || leaf(repo.cwd)}”?`,
@@ -987,7 +987,7 @@
                 "Nothing is deleted — the folder stays on disk and Add project brings "
                 + "it back. Any conversation still working in it ends. If a linked "
                 + "device has this project open, unsaved file edits there are lost.",
-              confirmLabel: "Hide",
+              confirmLabel: window.t("chat.rail.hideConfirm"),
               danger: true,
             });
             if (ok) vscode.postMessage({ type: "removeProjectFolder", cwd: repo.cwd });
@@ -1003,10 +1003,10 @@
         // the menu offered "Move to Projects" on a row already under Projects.
         const inArchive = !!opts.inArchive;
         items.push({
-          label: inArchive ? "Move to Projects" : "Archive project",
+          label: inArchive ? window.t("projectsRail.moveToProjects") : window.t("projectsRail.archiveProject"),
           title: inArchive
-            ? "Show this project under Projects again"
-            : "Move this project out of the way. Its conversations stay, and working here brings it back.",
+            ? window.t("projectsRail.moveToProjectsTitle")
+            : window.t("projectsRail.archiveTitle"),
           onSelect: () =>
             vscode.postMessage({
               type: "setRepoArchived",
@@ -1021,21 +1021,21 @@
       // hues + none stay one glance away.
       if (colorSupported()) {
         items.push({
-          label: "Set color",
-          title: "Tint this project's folder icon so it is easy to find",
+          label: window.t("chat.rail.setColor"),
+          title: window.t("chat.rail.setColorTitle"),
           onSelect: () => openColorPicker(menuBtn, repo, lastMenuRect),
         });
         items.push(null);
       }
       items.push({
-        label: "Clear all history",
+        label: window.t("chat.history.clearAll"),
         danger: true,
         disabled: repo.available === false,
         onSelect: async () => {
           const ok = await railDialog({
-            title: `Clear history for “${repo.label || leaf(repo.cwd)}”?`,
+            title: window.t("chat.history.clearTitle", { repo: repo.label || leaf(repo.cwd) }),
             body: "Every conversation in this project is deleted. This cannot be undone.",
-            confirmLabel: "Clear all",
+            confirmLabel: window.t("chat.rail.clearAllConfirm"),
             danger: true,
           });
           if (ok) vscode.postMessage({ type: "clearAllSessions", cwd: repo.cwd });
@@ -1206,7 +1206,7 @@
       pinBtn.type = "button";
       pinBtn.className = "rail-action-btn rail-pin-btn" + (isPinned ? " active" : "");
       pinBtn.innerHTML = isPinned ? ICON.pinFilled : ICON.pin;
-      pinBtn.title = isPinned ? "Unpin conversation" : "Pin conversation";
+      pinBtn.title = isPinned ? window.t("chat.rail.unpinConversation") : window.t("chat.rail.pinConversation");
       pinBtn.setAttribute("aria-label", pinBtn.title);
       pinBtn.onclick = (e) => {
         e.stopPropagation();
@@ -1224,19 +1224,19 @@
     menuBtn.type = "button";
     menuBtn.className = "rail-action-btn";
     menuBtn.innerHTML = ICON.ellipsis;
-    menuBtn.title = "Session actions";
+    menuBtn.title = window.t("chat.rail.sessionActions");
     menuBtn.setAttribute("aria-label", menuBtn.title);
     menuBtn.onclick = (e) => {
       e.stopPropagation();
       const cwd = s.cwd || repo.cwd;
       openMenu(menuBtn, [
         {
-          label: "Rename",
+          label: window.t("common.rename"),
           onSelect: async () => {
             const next = await railDialog({
-              title: "Rename conversation",
+              title: window.t("chat.rail.renameConversationTitle"),
               input: s.displayName || "",
-              confirmLabel: "Rename",
+              confirmLabel: window.t("common.rename"),
             });
             if (next == null) return;
             const name = next.trim();
@@ -1245,7 +1245,7 @@
           },
         },
         {
-          label: isPinned ? "Unpin conversation" : "Pin conversation",
+          label: isPinned ? window.t("chat.rail.unpinConversation") : window.t("chat.rail.pinConversation"),
           disabled: !state.pinnedKnown,
           onSelect: () =>
             vscode.postMessage({
@@ -1257,13 +1257,13 @@
         },
         null,
         {
-          label: "Delete",
+          label: window.t("common.delete"),
           danger: true,
           onSelect: async () => {
             const ok = await railDialog({
-              title: `Delete “${s.displayName || "session"}”?`,
+              title: window.t("chat.session.deleteTitle", { name: s.displayName || "session" }),
               body: "The conversation and its history are removed. This cannot be undone.",
-              confirmLabel: "Delete",
+              confirmLabel: window.t("common.delete"),
               danger: true,
             });
             if (ok) vscode.postMessage({ type: "deleteSession", id: s.id, name: s.displayName, cwd });

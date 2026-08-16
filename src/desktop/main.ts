@@ -30,7 +30,7 @@ import { GrokSidebar } from "../sidebar";
 import { Uri } from "../host";
 import type { HostContext, HostDisposable } from "../host";
 import { ConfigStore, SensitiveConfigStore } from "./config-store";
-import { localeFromConfig, detectSystemLocale, LANGUAGE_SETTING, type Locale } from "../i18n";
+import { localeFromConfig, detectSystemLocale, LANGUAGE_SETTING, t, type Locale } from "../i18n";
 import { createAppResourceHandler } from "./app-resource-handler";
 import type { DesktopOpenFileContext } from "./desktop-policy";
 import { createElectronHost, ensureWorkspaceRoot, type ElectronRemoteActions } from "./electron-host";
@@ -291,12 +291,13 @@ async function createApp(): Promise<void> {
     log(`sensitive config store init FAILED: ${msg}`);
     // Leave the credential in config.json for a later run; surface loudly so a
     // swallowed catch cannot silently destroy it (round 12).
+    const locale = localeFromConfig(
+      config.getConfiguration("grok").get("language", "auto"),
+      detectSystemLocale(app.getLocale?.() ?? ""),
+    );
     dialog.showErrorBox(
-      "Secure storage unavailable",
-      "Could not encrypt stored credentials (for example the voice API key). " +
-        "They remain in config.json until OS secure storage is available, and " +
-        "will migrate automatically on the next successful start.\n\n" +
-        msg,
+      t(locale, "desktop.error.secureStorageTitle"),
+      t(locale, "desktop.error.secureStorageBody", { msg }),
     );
   }
 

@@ -242,7 +242,7 @@
       id: "openChatFontScale",
       category: "general",
       title: t("settings.textSize.title"),
-      description: "Chat zoom lives in VS Code settings so it can stay a user or workspace preference.",
+      description: t("settings.textSize.openInVSCodeDesc"),
       kind: "action",
       actionLabel: "Open VS Code settings",
       visible: (s, env) => !!(env && !env.isRemote && !env.clientOwnsFontScale && !env.isDesktop),
@@ -284,8 +284,8 @@
     {
       id: "voiceSendPhrase",
       category: "voice",
-      title: "Send phrase",
-      description: "Spoken phrase that submits the message when it ends a transcription. Leave empty to disable hands-free send.",
+      title: t("settings.voice.sendPhrase"),
+      description: t("settings.voice.sendPhraseDesc"),
       kind: "text",
       placeholder: "grok send",
       defaultValue: "grok send",
@@ -295,10 +295,10 @@
     {
       id: "voiceKeyterms",
       category: "voice",
-      title: "Dictionary terms",
-      description: "Words or phrases that help streaming recognition spell project vocabulary. Press Enter to add a term.",
+      title: t("settings.voice.dictionaryTerms"),
+      description: t("settings.voice.dictionaryTermsDesc"),
       kind: "tags",
-      placeholder: "Add a term",
+      placeholder: t("settings.voice.addTerm"),
       defaultValue: [],
       get: (s) => (s && Array.isArray(s.voiceKeyterms)) ? s.voiceKeyterms : [],
       message: (value) => ({ type: "setVoiceKeyterms", value }),
@@ -306,7 +306,7 @@
     {
       id: "voiceConfigured",
       category: "voice",
-      title: "Voice input",
+      title: t("settings.voice.input"),
       description: "",
       kind: "action",
       actionLabel: "Open voice settings",
@@ -319,7 +319,7 @@
     {
       id: "voiceConfiguredStatus",
       category: "voice",
-      title: "Voice input",
+      title: t("settings.voice.input"),
       description: "",
       kind: "status",
       describe: (s) => (s && s.voiceConfigured)
@@ -356,7 +356,7 @@
       id: "ttsUnavailable",
       category: "voice",
       title: t("settings.readRepliesAloud.title"),
-      description: "Speech synthesis is not supported in this client.",
+      description: t("settings.voice.synthesisUnsupported"),
       kind: "status",
       visible: (s, env) => !!(env && env.ttsAvailable === false),
     },
@@ -433,8 +433,8 @@
     {
       id: "continueRemotely",
       category: "account",
-      title: "Continue remotely",
-      description: "Open AFK Pilot so you can keep this session going from another device.",
+      title: t("chat.composer.continueRemotely"),
+      description: t("settings.remote.continueDesc"),
       kind: "action",
       actionLabel: "Open",
       visible: (s, env) => !!(env && !env.isRemote && env.remoteLinked === true),
@@ -443,8 +443,8 @@
     {
       id: "yourAccount",
       category: "account",
-      title: "Your account",
-      description: "Open the AFK Pilot account page for this linked device.",
+      title: t("chat.gear.yourAccount"),
+      description: t("settings.remote.yourAccountDesc"),
       kind: "action",
       actionLabel: "Open",
       visible: (s, env) => !!(env && !env.isRemote && env.remoteLinked === true),
@@ -453,8 +453,8 @@
     {
       id: "unlinkDevice",
       category: "account",
-      title: "Unlink this device",
-      description: "Stop advertising this machine to AFK Pilot. Other devices lose this desk until you link it again.",
+      title: t("settings.remote.unlinkDevice"),
+      description: t("settings.remote.unlinkDesc"),
       kind: "action",
       actionLabel: "Unlink…",
       visible: (s, env) => !!(env && !env.isRemote && env.isDesktop && env.remoteLinked === true),
@@ -463,8 +463,8 @@
     {
       id: "remoteSignIn",
       category: "account",
-      title: "Sign in",
-      description: "Link this device to an AFK Pilot account so you can continue remotely.",
+      title: t("settings.remote.signIn"),
+      description: t("settings.remote.signInDesc"),
       kind: "action",
       actionLabel: "Link this device",
       visible: (s, env) => !!(env && !env.isRemote && env.remoteLinked === false),
@@ -473,8 +473,8 @@
     {
       id: "remoteHowItWorks",
       category: "account",
-      title: "How it works",
-      description: "AFK Pilot keeps this machine awake and lets you continue from a phone without storing prompts or code.",
+      title: t("chat.gear.howItWorks"),
+      description: t("settings.remote.howItWorksDesc"),
       kind: "action",
       actionLabel: "Learn more",
       visible: (s, env) => !!(env && !env.isRemote && env.remoteLinked === false && !env.standalone),
@@ -484,15 +484,15 @@
       id: "remoteAccountStatus",
       category: "account",
       title: "AFK Pilot",
-      description: "This browser is signed in and talking to the linked desk.",
+      description: t("settings.remote.afkPilotDesc"),
       kind: "status",
       visible: (s, env) => !!(env && env.isRemote),
     },
     {
       id: "remoteDeviceManager",
       category: "account",
-      title: "Device manager",
-      description: "Open the AFK Pilot device list for this account.",
+      title: t("settings.remote.deviceManager"),
+      description: t("settings.remote.deviceManagerDesc"),
       kind: "action",
       actionLabel: "Open",
       visible: (s, env) => !!(env && env.isRemote),
@@ -501,8 +501,8 @@
     {
       id: "openGlobalConfig",
       category: "advanced",
-      title: "Open global config",
-      description: "Open the user-level Grok config file on this machine.",
+      title: t("settings.advanced.openGlobalConfig"),
+      description: t("settings.advanced.openGlobalConfigDesc"),
       kind: "action",
       actionLabel: "Open",
       hostLocal: true,
@@ -511,8 +511,8 @@
     {
       id: "openProjectConfig",
       category: "advanced",
-      title: "Open project config",
-      description: "Open this project's Grok config file.",
+      title: t("settings.advanced.openProjectConfig"),
+      description: t("settings.advanced.openProjectConfigDesc"),
       kind: "action",
       actionLabel: "Open",
       hostLocal: true,
@@ -521,8 +521,8 @@
     {
       id: "runMcpList",
       category: "advanced",
-      title: "MCP servers",
-      description: "List the MCP servers configured for the Grok CLI.",
+      title: t("settings.advanced.mcpServers"),
+      description: t("settings.advanced.mcpServersDesc"),
       kind: "action",
       actionLabel: "Open",
       hostLocal: true,
@@ -531,8 +531,8 @@
     {
       id: "showLogs",
       category: "advanced",
-      title: "Show logs",
-      description: "Open the host log for this Grok client.",
+      title: t("settings.advanced.showLogs"),
+      description: t("settings.advanced.showLogsDesc"),
       kind: "action",
       actionLabel: (s, env) => logsLabel(env),
       hostLocal: true,
@@ -541,8 +541,8 @@
     {
       id: "toggleDevTools",
       category: "advanced",
-      title: "Toggle Developer Tools",
-      description: "Open or close Chromium Developer Tools for this window.",
+      title: t("menu.view.toggleDevTools"),
+      description: t("settings.advanced.devToolsDesc"),
       kind: "action",
       actionLabel: "Toggle",
       hostLocal: true,
@@ -552,8 +552,8 @@
     {
       id: "openVsCodeSettings",
       category: "advanced",
-      title: "Open VS Code settings",
-      description: "Open the host Settings editor focused on Grok.",
+      title: t("settings.advanced.openVSCodeSettings"),
+      description: t("settings.advanced.openVSCodeSettingsDesc"),
       kind: "action",
       actionLabel: "Open",
       hostLocal: true,
@@ -563,8 +563,8 @@
     {
       id: "moveView",
       category: "advanced",
-      title: "Move view",
-      description: "Open the editor's own picker so you can move the Grok chat to another dock.",
+      title: t("settings.advanced.moveView"),
+      description: t("settings.advanced.moveViewDesc"),
       kind: "action",
       actionLabel: "Move view…",
       hostLocal: true,
@@ -579,15 +579,15 @@
     {
       id: "hostConfigRemote",
       category: "advanced",
-      title: "Host configuration",
-      description: "Host config is managed on the desk.",
+      title: t("settings.advanced.hostConfig"),
+      description: t("settings.advanced.hostConfigDesc"),
       kind: "status",
       visible: (s, env) => !!(env && env.isRemote),
     },
     {
       id: "aboutWebApp",
       category: "about",
-      title: "Web app",
+      title: t("settings.about.webApp"),
       kind: "value",
       visible: (s, env) => remoteAbout(s, env),
       get: () => versionLabel(webAppVersion()),
@@ -595,7 +595,7 @@
     {
       id: "aboutConnectedTo",
       category: "about",
-      title: "Connected to",
+      title: t("settings.about.connectedTo"),
       kind: "value",
       visible: (s, env) => remoteAbout(s, env),
       get: (s) => {
@@ -614,7 +614,7 @@
     {
       id: "aboutThisExtension",
       category: "about",
-      title: "This extension",
+      title: t("settings.about.thisExtension"),
       kind: "value",
       visible: (s, env) => !remoteAbout(s, env),
       get: (s) => versionLabel(s && s.extVersion),
@@ -656,7 +656,7 @@
     {
       id: "aboutCodexUpdate",
       category: "about",
-      title: "Codex updates",
+      title: t("settings.about.grokBuildCliUpdates"),
       kind: "status",
       visible: (s) => !!codexProvider(s),
       describe: (s, env) => {
@@ -676,7 +676,7 @@
     {
       id: "aboutGrokUpdateStatus",
       category: "about",
-      title: "Grok Build CLI updates",
+      title: t("settings.about.grokBuildCliUpdates"),
       kind: "status",
       visible: (s, env) => showGrokAbout(s, env) && !remoteAbout(s, env),
       describe: (s) => grokUpdateStatusText(s),
@@ -684,7 +684,7 @@
     {
       id: "aboutGrokUpdatePolicy",
       category: "about",
-      title: "Updates paused",
+      title: t("settings.about.updatesPaused"),
       kind: "status",
       visible: (s, env) => showGrokAbout(s, env) && !remoteAbout(s, env) && grokUpdateBlocked(s),
       describe: (s) => {
@@ -695,8 +695,8 @@
     {
       id: "aboutUpdateGrok",
       category: "about",
-      title: "Update Grok Build CLI",
-      description: "Download and install the latest Grok Build CLI on this machine.",
+      title: t("settings.about.updateGrokCli"),
+      description: t("settings.about.updateGrokCliDesc"),
       kind: "action",
       actionLabel: "Update Grok Build CLI",
       visible: (s, env) => showGrokAbout(s, env) && !remoteAbout(s, env) && canUpdateGrok(s),
@@ -705,8 +705,8 @@
     {
       id: "aboutUpdateGrokBlocked",
       category: "about",
-      title: "Update Grok Build CLI",
-      description: "Updates are paused for compatibility.",
+      title: t("settings.about.updateGrokCli"),
+      description: t("settings.about.updatePausedDesc"),
       kind: "action",
       actionLabel: "Update Grok Build CLI",
       visible: (s, env) => showGrokAbout(s, env) && !remoteAbout(s, env) && grokUpdateBlocked(s),
@@ -716,7 +716,7 @@
     {
       id: "aboutRemoteCliUpdate",
       category: "about",
-      title: "CLI update",
+      title: t("settings.about.cliUpdate"),
       kind: "status",
       visible: (s, env) => !!(env && env.isRemote && grokUpdateOf(s).updateAvailable),
       describe: (s) => {
@@ -727,8 +727,8 @@
     {
       id: "reportBug",
       category: "about",
-      title: "Report a bug",
-      description: "Open a new issue on the GitHub tracker.",
+      title: t("settings.about.reportBug"),
+      description: t("settings.about.reportBugDesc"),
       kind: "action",
       actionLabel: "Open",
       href: GITHUB_ISSUE_BUG_URL,
@@ -736,8 +736,8 @@
     {
       id: "requestFeature",
       category: "about",
-      title: "Request a feature",
-      description: "Open a new issue on the GitHub tracker.",
+      title: t("settings.about.requestFeature"),
+      description: t("settings.about.requestFeatureDesc"),
       kind: "action",
       actionLabel: "Open",
       href: GITHUB_ISSUE_FEATURE_URL,
@@ -745,7 +745,7 @@
     {
       id: "contactSupport",
       category: "about",
-      title: "Contact",
+      title: t("settings.about.contact"),
       description: "support@productcompass.pm",
       kind: "action",
       actionLabel: "Email",
@@ -755,7 +755,7 @@
       id: "aboutRepo",
       category: "about",
       title: "phuryn/grok-build-vscode",
-      description: "Source repository on GitHub.",
+      description: t("settings.about.sourceRepoDesc"),
       kind: "action",
       actionLabel: "Open",
       href: GITHUB_REPO_URL,
@@ -1165,7 +1165,7 @@
         const remove = document.createElement("button");
         remove.type = "button";
         remove.className = "settings-tag-remove";
-        remove.setAttribute("aria-label", "Remove " + term);
+        remove.setAttribute("aria-label", t("settings.removeTermAria", { term }));
         remove.textContent = "×";
         chip.appendChild(label);
         chip.appendChild(remove);
@@ -1215,7 +1215,7 @@
     const modal = !opts.standalone;
     container.classList.add("settings-surface");
     container.setAttribute("role", "dialog");
-    container.setAttribute("aria-label", "Settings");
+    container.setAttribute("aria-label", t("settings.title"));
     if (modal) {
       container.setAttribute("aria-modal", "true");
       coverSiblings(container, true);
@@ -1326,19 +1326,19 @@
 
       const nav = document.createElement("nav");
       nav.className = "settings-nav";
-      nav.setAttribute("aria-label", "Settings categories");
+      nav.setAttribute("aria-label", t("settings.categoriesAria"));
       if (modal && onClose) {
         const back = document.createElement("button");
         back.type = "button";
         back.className = "settings-back";
-        back.setAttribute("aria-label", "Back to app");
+        back.setAttribute("aria-label", t("settings.backToApp"));
         const arrow = document.createElement("span");
         arrow.className = "settings-back-arrow";
         arrow.setAttribute("aria-hidden", "true");
         arrow.textContent = "←";
         const backLabel = document.createElement("span");
         backLabel.className = "settings-back-label";
-        backLabel.textContent = "Back to app";
+        backLabel.textContent = t("settings.backToApp");
         back.append(arrow, backLabel);
         back.onclick = (e) => { e.stopPropagation(); onClose(); };
         nav.appendChild(back);
@@ -1349,8 +1349,8 @@
       search.type = "search";
       search.id = "settings-search";
       search.className = "settings-search";
-      search.placeholder = "Search settings";
-      search.setAttribute("aria-label", "Search settings");
+      search.placeholder = t("settings.searchPlaceholder");
+      search.setAttribute("aria-label", t("settings.searchAria"));
       search.value = query;
       searchWrap.appendChild(search);
       nav.appendChild(searchWrap);
@@ -1377,7 +1377,7 @@
       const navSelect = document.createElement("select");
       navSelect.className = "settings-nav-select settings-select";
       navSelect.id = "settings-category";
-      navSelect.setAttribute("aria-label", "Settings category");
+      navSelect.setAttribute("aria-label", t("settings.categoryAria"));
       if (!phoneNav) navSelect.hidden = true;
       for (const cat of shownCats) {
         const option = document.createElement("option");
@@ -1407,7 +1407,7 @@
         const restore = document.createElement("button");
         restore.type = "button";
         restore.className = "settings-restore";
-        restore.textContent = "Restore defaults";
+        restore.textContent = t("settings.restoreDefaults");
         restore.onclick = (e) => { e.stopPropagation(); beginRestoreConfirm(); };
         headActions.appendChild(restore);
       }
@@ -1418,10 +1418,10 @@
         const confirm = document.createElement("div");
         confirm.className = "settings-restore-confirm";
         confirm.setAttribute("role", "region");
-        confirm.setAttribute("aria-label", "Confirm restore defaults");
+        confirm.setAttribute("aria-label", t("settings.confirmRestoreAria"));
         const lead = document.createElement("div");
         lead.className = "settings-restore-confirm-lead";
-        lead.textContent = "These settings on this page will change:";
+        lead.textContent = t("settings.restoreWillChange");
         const list = document.createElement("ul");
         list.className = "settings-restore-confirm-list";
         for (const row of pendingRestore) {
@@ -1434,12 +1434,12 @@
         const go = document.createElement("button");
         go.type = "button";
         go.className = "settings-restore-confirm-go";
-        go.textContent = "Restore";
+        go.textContent = t("settings.restore");
         go.onclick = (e) => { e.stopPropagation(); commitRestoreConfirm(); };
         const cancel = document.createElement("button");
         cancel.type = "button";
         cancel.className = "settings-restore-confirm-cancel";
-        cancel.textContent = "Cancel";
+        cancel.textContent = t("common.cancel");
         cancel.onclick = (e) => { e.stopPropagation(); cancelRestoreConfirm(); };
         actions.append(go, cancel);
         confirm.append(lead, list, actions);

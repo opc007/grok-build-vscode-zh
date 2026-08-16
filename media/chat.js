@@ -268,12 +268,12 @@
     codex: "chat.input.placeholder.codex",
   };
   const EFFORT_TOOLTIPS = {
-    none: "None — no extra reasoning",
-    minimal: "Minimal — least reasoning",
-    low: "Low — fast, lightweight reasoning",
-    medium: "Medium — balanced",
-    high: "High — deeper reasoning",
-    xhigh: "XHigh — deepest reasoning, slowest",
+    none: window.t("chat.gear.effort.none"),
+    minimal: window.t("chat.gear.effort.minimal"),
+    low: window.t("chat.gear.effort.low"),
+    medium: window.t("chat.gear.effort.medium"),
+    high: window.t("chat.gear.effort.high"),
+    xhigh: window.t("chat.gear.effort.xhigh"),
   };
 
   // The effort levels the gear picker OFFERS: the ACTIVE model's advertised menu
@@ -1033,7 +1033,7 @@
       `<span class="expr-actions" contenteditable="false">` +
         `<button class="expr-btn" type="button" data-expr-act="copy" title="Copy ${label}">${ICON.copy}</button>` +
         `<button class="expr-btn" type="button" data-expr-act="download" title="${dlTitle}">${ICON.download}</button>` +
-        (IS_REMOTE ? "" : `<button class="expr-btn" type="button" data-expr-act="open" title="Open as PNG">${ICON.file}</button>`) +
+        (IS_REMOTE ? "" : `<button class="expr-btn" type="button" data-expr-act="open" title="${window.t("chat.action.openAsPng")}">${ICON.file}</button>`) +
       `</span>`
     );
   }
@@ -2163,7 +2163,7 @@
     const closeBtn = document.createElement("button");
     closeBtn.type = "button";
     closeBtn.className = "preview-action-btn preview-close-btn";
-    closeBtn.setAttribute("aria-label", "Close");
+    closeBtn.setAttribute("aria-label", window.t("common.close"));
     closeBtn.innerHTML = ICON.x;
     closeBtn.onclick = (e) => { e.stopPropagation(); closePreviewOverlay(); };
     actions.appendChild(copyBtn);
@@ -2573,7 +2573,7 @@
     // the section rule so a separator appears under the slider.
     modelEffortSection.className = "popover-section" +
       (CLIENT_OWNS_FONT_SCALE ? "" : " popover-section-first");
-    modelEffortSection.textContent = "Model and Effort";
+    modelEffortSection.textContent = window.t("chat.gear.modelAndEffort");
     gearPopover.appendChild(modelEffortSection);
 
     // ── Model + effort row ────────────────────────────────────────────────
@@ -2591,12 +2591,12 @@
     const nameBtn = document.createElement("button");
     nameBtn.className = "toolbar-btn model-name-btn" + (settingsLocked || !modelLoaded ? " disabled" : "");
     const ownModels = state.availableModels.filter((model) => !model.provider || model.provider === state.activeProvider);
-    const modelName = modelLoaded ? (modelDisplayName(state.currentModelId, ownModels) || "Grok Build") : "Loading…";
+    const modelName = modelLoaded ? (modelDisplayName(state.currentModelId, ownModels) || "Grok Build") : window.t("chat.rail.loading");
     nameBtn.innerHTML = `<span class="btn-label">${escapeHtml(truncate(modelName, 16))}</span>`;
     nameBtn.disabled = settingsLocked || !modelLoaded;
     nameBtn.title = !modelLoaded
-      ? "Loading the session…"
-      : (settingsLocked ? `${modelName} — available once the session is ready` : `${modelName} — click to change`);
+      ? window.t("chat.gear.loadingSession")
+      : (settingsLocked ? `${modelName} — ${window.t("chat.mode.availableWhenReady")}` : `${modelName} — ${window.t("chat.gear.clickToChange")}`);
     if (!settingsLocked && modelLoaded) nameBtn.onclick = (e) => { e.stopPropagation(); renderModelPicker(); };
     row.appendChild(nameBtn);
 
@@ -2608,7 +2608,7 @@
       for (let i = 0; i < 5; i++) {
         const dot = document.createElement("span");
         dot.className = "effort-dot loading disabled";
-        dot.title = "Loading the session…";
+        dot.title = window.t("chat.gear.loadingSession");
         dotsEl.appendChild(dot);
       }
     } else {
@@ -2620,7 +2620,7 @@
         // Render the dot as a CSS-shaped span (see chat.css). Avoids the classic
         // ● vs ○ Unicode size mismatch where the empty glyph is visibly larger.
         dot.title = settingsLocked
-          ? "Available once the session is ready"
+          ? window.t("chat.mode.availableWhenReady")
           : (EFFORT_TOOLTIPS[id] || capitalize(id));
         if (!settingsLocked) dot.onclick = (e) => {
           e.stopPropagation();
@@ -2644,8 +2644,8 @@
     // you're already in one, so the controls must stay reachable). Never from a
     // remote: the host acts on its own focused session, not the requester's.
     if (state.isWorktree && !IS_REMOTE) {
-      addSection("Session");
-      addGearItem(`<span class="gear-lead">${ICON.gitBranch}<span>Apply worktree</span></span>`, () => {
+      addSection(window.t("chat.gear.session"));
+      addGearItem(`<span class="gear-lead">${ICON.gitBranch}<span>${window.t("chat.gear.applyWorktree")}</span></span>`, () => {
         closePopovers();
         // Bind the conversation at dialog-OPEN time. Confirmation overlays
         // outlive a session swap, so reading state.activeSessionId after the
@@ -2653,20 +2653,20 @@
         // the open-time id a stale dialog gets a host refusal instead.
         const sessionId = state.activeSessionId;
         uiConfirm({
-          title: "Apply worktree?",
-          body: "Merges this worktree's edits back into the main checkout.",
-          confirmLabel: "Apply",
+          title: window.t("chat.gear.applyWorktreeTitle"),
+          body: window.t("chat.gear.applyWorktreeBody"),
+          confirmLabel: window.t("chat.gear.applyLabel"),
         }).then((ok) => { if (ok) vscode.postMessage({ type: "applyWorktree", sessionId }); });
       });
-      addGearItem(`<span class="gear-lead">${ICON.gitBranch}<span>Remove worktree</span></span>`, () => {
+      addGearItem(`<span class="gear-lead">${ICON.gitBranch}<span>${window.t("chat.gear.removeWorktree")}</span></span>`, () => {
         closePopovers();
         // Same open-time binding as Apply — this one discards edits on the
         // wrong target, which is exactly the class the refusal exists for.
         const sessionId = state.activeSessionId;
         uiConfirm({
-          title: "Remove worktree?",
-          body: "This deletes the isolated checkout. Unapplied edits are lost.",
-          confirmLabel: "Remove",
+          title: window.t("chat.gear.removeWorktreeTitle"),
+          body: window.t("chat.gear.removeWorktreeBody"),
+          confirmLabel: window.t("chat.gear.removeLabel"),
           danger: true,
         }).then((ok) => { if (ok) vscode.postMessage({ type: "removeWorktree", sessionId }); });
       });
@@ -2678,13 +2678,13 @@
     // ── Use this app for ──────────────────────────────────────────────────
     // Progressive disclosure: Knowledge work (default) hides worktrees,
     // thinking traces and tool details; Coding unlocks them (still default off).
-    addSection("Use this app for");
+    addSection(window.t("settings.appPurpose.title"));
     addGearItem(
-      `<span title="Hides worktrees, thinking traces, and tool details. The default for knowledge work.">Knowledge work</span>${state.appPurpose !== "coding" ? '<span class="popover-check">✓</span>' : ""}`,
+      `<span title="${window.t("chat.gear.knowledgeTip")}">Knowledge work</span>${state.appPurpose !== "coding" ? '<span class="popover-check">✓</span>' : ""}`,
       () => { setAppPurpose("knowledge"); renderGearMain(); gearPopover.hidden = false; },
     );
     addGearItem(
-      `<span title="Adds worktrees, thinking traces, and tool details (still off by default).">Coding</span>${state.appPurpose === "coding" ? '<span class="popover-check">✓</span>' : ""}`,
+      `<span title="${window.t("chat.gear.codingTip")}">Coding</span>${state.appPurpose === "coding" ? '<span class="popover-check">✓</span>' : ""}`,
       () => { setAppPurpose("coding"); renderGearMain(); gearPopover.hidden = false; },
     );
 
@@ -2693,33 +2693,33 @@
     // `remoteLinked === null` = the host hasn't answered yet: show NOTHING
     // rather than guessing. Unlink lives only in Settings → Account.
     if (!IS_REMOTE && state.remoteLinked !== null) {
-      addSection("Remote Control");
+      addSection(window.t("chat.gear.remoteControl"));
       if (state.remoteLinked) {
-        addGearItem(`<span class="gear-lead">${ICON.smartphone}<span>Continue remotely</span></span>`, () => {
+        addGearItem(`<span class="gear-lead">${ICON.smartphone}<span>${window.t("chat.composer.continueRemotely")}</span></span>`, () => {
           vscode.postMessage({ type: "openRemotePortal", withHint: true });
           closePopovers();
         });
-        addGearItem(`<span class="gear-lead">${ICON.user}<span>Your account</span></span>`, () => {
+        addGearItem(`<span class="gear-lead">${ICON.user}<span>${window.t("chat.gear.yourAccount")}</span></span>`, () => {
           vscode.postMessage({ type: "openRemotePortal" });
           closePopovers();
         });
       } else {
-        addGearItem(`<span class="gear-lead">${ICON.user}<span>Sign in (link this device)</span></span>`, () => {
+        addGearItem(`<span class="gear-lead">${ICON.user}<span>${window.t("chat.gear.signInLinkDevice")}</span></span>`, () => {
           vscode.postMessage({ type: "remoteSignIn" });
           closePopovers();
         });
-        addGearItem(`<span class="gear-lead">${ICON.info}<span>How it works</span></span>`, () => {
+        addGearItem(`<span class="gear-lead">${ICON.info}<span>${window.t("chat.gear.howItWorks")}</span></span>`, () => {
           closePopovers();
           showRemoteExplainer();
         });
       }
     }
 
-    addSection("Settings");
+    addSection(window.t("settings.title"));
     addGearItem(`<span class="gear-lead">${ICON.gear}<span>Settings</span></span>`, () => openAllSettings());
     // Older hosts have no provider account frame; retain their existing action.
     if (!IS_REMOTE && !state.providersKnown) {
-      addGearItem("<span>Log out</span>", () => {
+      addGearItem("<span>" + window.t("chat.gear.logOut") + "</span>", () => {
         vscode.postMessage({ type: "logout" });
         closePopovers();
       });
@@ -2738,7 +2738,7 @@
 
   function renderProviderAccounts() {
     if (!gearShowsProviderAccounts()) return;
-    addSection("Accounts");
+    addSection(window.t("chat.gear.accounts"));
     for (const provider of state.providers) {
       const connected = provider.connected === true;
       // A connected account whose agent answered an auth failure: the useful
@@ -2778,8 +2778,8 @@
     const dests = [
       {
         id: "workspace",
-        label: "Use this workspace",
-        description: "Continue from here in the current checkout",
+        label: window.t("chat.continue.workspace"),
+        description: window.t("chat.continue.workspaceDesc"),
       },
     ];
     // Desk-only: the host creates a worktree against its own workspace root
@@ -2789,8 +2789,8 @@
     if (isCodingPurpose() && state.worktreeSupported && !state.isWorktree && !IS_REMOTE) {
       dests.push({
         id: "worktree",
-        label: "Use a new worktree",
-        description: "Continue from here in an isolated checkout",
+        label: window.t("chat.continue.worktree"),
+        description: window.t("chat.continue.worktreeDesc"),
       });
     }
     return dests;
@@ -2832,7 +2832,7 @@
     // away or Escape.
     gearPopover.classList.add("popover-centered");
     gearPopover.hidden = false;
-    addSection("Continue in a new chat");
+    addSection(window.t("chat.continue.section"));
     dests.forEach((d, i) => {
       const el = document.createElement("div");
       el.className = "toolbar-popover-item" + (i === 0 ? " active" : "");
@@ -2857,7 +2857,7 @@
   function renderModelPicker() {
     state.gearView = "model";
     gearPopover.innerHTML = "";
-    addGearItem('<span class="popover-back">← Model</span>', renderGearMain);
+    addGearItem('<span class="popover-back">' + window.t("chat.gear.backToModel") + '</span>', renderGearMain);
     let models = state.availableModels.length
       ? state.availableModels
       : [{ modelId: state.currentModelId || "grok-build", name: state.currentModelId || "grok-build" }];
@@ -2891,7 +2891,7 @@
       // host refuses `runGrokLogin` from a remote — so a phone gets the fact,
       // not a button that would do nothing.
       el.className = "toolbar-popover-item model-signin" + (IS_REMOTE ? "" : " popover-action");
-      el.innerHTML = `<span class="popover-warn">${IS_REMOTE ? "Sign in at the desk to load models" : "Sign in to load models"}</span>`;
+      el.innerHTML = `<span class="popover-warn">${IS_REMOTE ? window.t("chat.model.signInDeskToLoad") : window.t("chat.model.signInToLoad")}</span>`;
       if (!IS_REMOTE) {
         el.onclick = (e) => {
           e.stopPropagation();
@@ -3287,7 +3287,7 @@
       handle.className = "rail-resizer";
       handle.setAttribute("role", "separator");
       handle.setAttribute("aria-orientation", "vertical");
-      handle.setAttribute("aria-label", "Resize projects rail");
+      handle.setAttribute("aria-label", window.t("chat.rail.resizeAria"));
       handle.title = window.t("chat.resize.dragToResize");
       rail.parentElement.insertBefore(handle, rail.nextSibling);
     }
@@ -3625,7 +3625,7 @@
       pin.className = "history-action-btn" + (repo.pinned ? " active" : "");
       pin.disabled = repoSwitcherLocked();
       pin.innerHTML = ICON.pin;
-      pin.title = repo.pinned ? "Unpin repository" : "Pin repository";
+      pin.title = repo.pinned ? window.t("chat.rail.unpinRepository") : window.t("chat.rail.pinRepository");
       pin.onclick = (e) => {
         e.stopPropagation();
         vscode.postMessage({ type: "toggleRepoPin", cwd: repo.cwd, pinned: !repo.pinned });
@@ -4185,7 +4185,7 @@
     const picker = document.createElement("div");
     picker.className = "rail-color-picker";
     picker.setAttribute("role", "listbox");
-    picker.setAttribute("aria-label", "Project color");
+    picker.setAttribute("aria-label", window.t("chat.projectColorAria"));
     const swatches = [];
     for (const sw of REPO_COLOR_SWATCHES) {
       const btn = document.createElement("button");
@@ -5097,7 +5097,7 @@
       (s) => railMatches(s.displayName) || railMatches(railRepoLabelFor(s.cwd)),
     );
     if (pinned.length) {
-      root.appendChild(railStaticGroupHead("Pinned"));
+      root.appendChild(railStaticGroupHead(window.t("chat.rail.pinnedGroup")));
       const pinList = document.createElement("div");
       pinList.className = "rail-list rail-pinned";
       for (const s of pinned) {
@@ -5118,13 +5118,13 @@
       const forcedOpen = !!q;
       const open = forcedOpen || !railGroupIsCollapsed("recent");
       root.appendChild(railCollapsibleGroupHead({
-        title: "Recent",
+        title: window.t("chat.rail.groupRecent"),
         group: "recent",
         open,
         forcedOpenBySearch: forcedOpen,
-        openTitle: "Hide recent conversations",
-        closedTitle: "Show recent conversations",
-        searchTitle: "Open while your search matches a conversation",
+        openTitle: window.t("chat.rail.recentHide"),
+        closedTitle: window.t("chat.rail.recentShow"),
+        searchTitle: window.t("chat.rail.recentSearch"),
       }));
       if (open) {
         const list = document.createElement("div");
@@ -5148,13 +5148,13 @@
       const forcedOpen = !!q;
       const open = forcedOpen || !railGroupIsCollapsed("projects");
       root.appendChild(railCollapsibleGroupHead({
-        title: "Projects",
+        title: window.t("chat.rail.groupProjects"),
         group: "projects",
         open,
         forcedOpenBySearch: forcedOpen,
-        openTitle: "Hide projects",
-        closedTitle: "Show projects",
-        searchTitle: "Open while your search matches a project",
+        openTitle: window.t("chat.rail.projectsHide"),
+        closedTitle: window.t("chat.rail.projectsShow"),
+        searchTitle: window.t("chat.rail.projectsSearch"),
         action: canAddProjectFolder() ? railAddProjectButton : undefined,
       }));
       if (open) {
@@ -5172,14 +5172,14 @@
       const forcedOpen = !!q;
       const open = forcedOpen || !railGroupIsCollapsed("archived");
       root.appendChild(railCollapsibleGroupHead({
-        title: "Project Archive",
+        title: window.t("chat.rail.groupArchive"),
         group: "archived",
         open,
         forcedOpenBySearch: forcedOpen,
         icon: ICON.archive,
-        openTitle: "Hide archived projects",
-        closedTitle: "Show archived projects",
-        searchTitle: "Open while your search matches an archived project",
+        openTitle: window.t("chat.rail.archiveHide"),
+        closedTitle: window.t("chat.rail.archiveShow"),
+        searchTitle: window.t("chat.rail.archiveSearch"),
       }));
       if (open) {
         const list = document.createElement("div");
@@ -5295,8 +5295,8 @@
     btn.type = "button";
     btn.className = "rail-action-btn rail-add-project";
     btn.innerHTML = ICON.plus;
-    btn.title = "Add project folder";
-    btn.setAttribute("aria-label", "Add project folder");
+    btn.title = window.t("chat.rail.addProjectFolder");
+    btn.setAttribute("aria-label", window.t("chat.rail.addProjectFolder"));
     btn.onclick = (e) => {
       e.stopPropagation();
       vscode.postMessage({ type: "addProjectFolder" });
@@ -5350,7 +5350,7 @@
       const more = document.createElement("button");
       more.type = "button";
       more.className = "rail-more";
-      more.textContent = "Show more";
+      more.textContent = window.t("chat.action.showMore");
       more.onclick = (e) => {
         e.stopPropagation();
         state.railExpanded[expandKey] = true;
@@ -5362,7 +5362,7 @@
       const less = document.createElement("button");
       less.type = "button";
       less.className = "rail-more";
-      less.textContent = "Show less";
+      less.textContent = window.t("chat.action.showLess");
       less.onclick = (e) => {
         e.stopPropagation();
         delete state.railExpanded[expandKey];
@@ -5501,7 +5501,7 @@
     inputEl.className = "session-name-input";
     inputEl.id = labelEl.id;
     inputEl.value = displayedSessionName(activeSessionRecord());
-    inputEl.setAttribute("aria-label", "Conversation name");
+    inputEl.setAttribute("aria-label", window.t("chat.conversationNameAria"));
     inputEl.onclick = (e) => e.stopPropagation();
     inputEl.onkeydown = (e) => {
       e.stopPropagation();
@@ -5574,12 +5574,12 @@
       "Session actions",
       [
         {
-          label: "Continue in a new chat",
+          label: window.t("chat.continue.section"),
           icon: ICON.gitFork,
           onSelect: () => beginContinueInNewChat(state.activeSessionId),
         },
         {
-          label: "Export conversation as Markdown",
+          label: window.t("chat.export.conversationMarkdown"),
           icon: ICON.download,
           onSelect: () => exportCurrentSession(),
         },
@@ -5647,7 +5647,7 @@
         }
         // No live record yet (brand-new / still starting): still offer New.
         return [{
-          label: "New session",
+          label: window.t("chat.action.newSession"),
           icon: ICON.squarePen,
           onSelect: () => beginNewSession(),
         }];
@@ -5672,9 +5672,9 @@
     label.textContent = name;
     label.title = name;
     editBtn.hidden = false;
-    label.setAttribute("aria-label", `Conversation: ${name}. Activate to rename.`);
-    editBtn.title = "Rename conversation";
-    editBtn.setAttribute("aria-label", "Rename conversation");
+    label.setAttribute("aria-label", window.t("chat.conversationAria", { name }));
+    editBtn.title = window.t("chat.gear.renameConversation");
+    editBtn.setAttribute("aria-label", window.t("chat.gear.renameConversation"));
     editBtn.innerHTML = ICON.pencil;
     wireSessionNameLabel(label, editBtn, "local");
     editBtn.onclick = (e) => { e.stopPropagation(); beginSessionNameEdit("local", label, editBtn); };
@@ -5762,8 +5762,8 @@
     }
     if (editBtn) {
       editBtn.hidden = !canRename;
-      editBtn.title = "Rename conversation";
-      editBtn.setAttribute("aria-label", "Rename conversation");
+      editBtn.title = window.t("chat.gear.renameConversation");
+      editBtn.setAttribute("aria-label", window.t("chat.gear.renameConversation"));
       editBtn.innerHTML = ICON.pencil;
       editBtn.onclick = (e) => { e.stopPropagation(); beginSessionNameEdit("remote", titleEl, editBtn); };
     }
@@ -5771,7 +5771,7 @@
       titleEl.classList.add("session-name-label");
       titleEl.setAttribute("role", "button");
       titleEl.tabIndex = 0;
-      titleEl.setAttribute("aria-label", `Conversation: ${name}. Activate to rename.`);
+      titleEl.setAttribute("aria-label", window.t("chat.conversationAria", { name }));
       if (!state.sessionNameEditing || state.sessionNameEditing.surface !== "remote") {
         wireSessionNameLabel(titleEl, editBtn || { hidden: true }, "remote");
       }
@@ -5844,7 +5844,7 @@
     head.setAttribute("aria-expanded", String(expanded));
     head.setAttribute(
       "aria-label",
-      (expanded ? "Collapse " : "Expand ") + (repo.label || cwdLeaf(repo.cwd)),
+      (expanded ? window.t("chat.rail.collapse") : window.t("chat.rail.expand")) + (repo.label || cwdLeaf(repo.cwd)),
     );
 
     // Folder open/closed indicator — same `expanded` flag as the session list.
@@ -5976,11 +5976,11 @@
       // Hidden entirely against a host too old to record the choice: a control
       // that silently does nothing is worse than one that isn't there.
       ...(railArchiveSupported() ? [{
-        label: inArchive ? "Move to Projects" : "Archive project",
+        label: inArchive ? window.t("projectsRail.moveToProjects") : window.t("projectsRail.archiveProject"),
         icon: inArchive ? ICON.archiveRestore : ICON.archive,
         title: inArchive
-          ? "Show this project under Projects again"
-          : "Move this project out of the way. Its conversations stay, and working here brings it back.",
+          ? window.t("projectsRail.moveToProjectsTitle")
+          : window.t("projectsRail.archiveTitle"),
         onSelect: () => vscode.postMessage({
           type: "setRepoArchived",
           cwd: repo.cwd,
@@ -5991,9 +5991,9 @@
       // (`color` present on catalog rows). Opens a swatch picker rather than a
       // nested menu so six hues + none stay one glance away.
       ...(railColorSupported() ? [{
-        label: "Set color",
+        label: window.t("chat.rail.setColor"),
         icon: ICON.palette,
-        title: "Tint this project's folder icon so it is easy to find",
+        title: window.t("chat.rail.setColorTitle"),
         onSelect: () => openRepoColorPicker(projectMenuBtn, repo),
       }, null] : []),
       // The desktop's equivalent, and a different act despite the same intent.
@@ -6003,7 +6003,7 @@
       // capability as the + that adds them: a host that can open a folder can
       // close one, and one that cannot never grows either control.
       ...(canAddProjectFolder() ? [{
-        label: "Hide project",
+        label: window.t("chat.rail.hideProject"),
         icon: ICON.archive,
         title:
           "Take this project out of the list. Nothing is deleted — the folder " +
@@ -6011,7 +6011,7 @@
         onSelect: () => vscode.postMessage({ type: "removeProjectFolder", cwd: repo.cwd }),
       }, null] : []),
       {
-        label: "Clear all history",
+        label: window.t("chat.action.clearAllHistory"),
         icon: ICON.trash,
         danger: true,
         disabled: !repo.available || knownEmpty || !reachable,
@@ -6183,7 +6183,7 @@
       const branch = document.createElement("span");
       branch.className = "rail-session-branch";
       branch.innerHTML = ICON.gitBranch;
-      branch.title = "Worktree: " + s.worktreeLabel;
+      branch.title = window.t("chat.session.worktreeTitle", { label: s.worktreeLabel });
       row.appendChild(branch);
     }
     let name = s.displayName || window.t("chat.session.untitled");
@@ -6223,7 +6223,7 @@
         pinBtn.type = "button";
         pinBtn.className = "rail-action-btn rail-pin-btn" + (isPinned ? " active" : "");
         pinBtn.innerHTML = isPinned ? ICON.pinFilled : ICON.pin;
-        pinBtn.title = isPinned ? "Unpin conversation" : "Pin conversation";
+        pinBtn.title = isPinned ? window.t("chat.rail.unpinConversation") : window.t("chat.rail.pinConversation");
         pinBtn.setAttribute("aria-label", pinBtn.title);
         pinBtn.onclick = (e) => {
           e.stopPropagation();
@@ -6276,7 +6276,7 @@
     // New (+ on the project head) and must not gain a second one here.
     if (opts?.includeNew) {
       items.unshift({
-        label: "New session",
+        label: window.t("chat.action.newSession"),
         icon: ICON.squarePen,
         onSelect: () => beginNewSession(),
       });
@@ -6295,17 +6295,17 @@
       // contents reshuffle mid-open is its own kind of wrong.
       const pending = !railIdlessActionsAllowed();
       const waiting = pending
-        ? { disabled: true, title: "Available once the conversation has finished opening" }
+        ? { disabled: true, title: window.t("chat.rail.availableOnceOpened") }
         : null;
       items.push({
-        label: "Continue in a new chat",
+        label: window.t("chat.continue.section"),
         icon: ICON.gitFork,
         ...waiting,
         onSelect: () => beginContinueInNewChat(s.id),
       });
       // The live transcript this client is showing — same scope as Continue.
       items.push({
-        label: "Export as Markdown",
+        label: window.t("chat.export.asMarkdown"),
         icon: ICON.download,
         onSelect: () => exportCurrentSession(),
       });
@@ -6320,24 +6320,24 @@
       // worse than one that isn't there.
       if (state.isWorktree && !IS_REMOTE) {
         items.push({
-          label: "Apply worktree",
+          label: window.t("chat.gear.applyWorktree"),
           icon: ICON.gitBranch,
           ...waiting,
           onSelect: () => uiConfirm({
-            title: "Apply worktree?",
-            body: "Merges this worktree's edits back into the main checkout.",
-            confirmLabel: "Apply",
+            title: window.t("chat.gear.applyWorktreeTitle"),
+            body: window.t("chat.gear.applyWorktreeBody"),
+            confirmLabel: window.t("chat.gear.applyLabel"),
           }).then((ok) => { if (ok) vscode.postMessage({ type: "applyWorktree", sessionId: s.id }); }),
         });
         items.push({
-          label: "Remove worktree",
+          label: window.t("chat.gear.removeWorktree"),
           icon: ICON.gitBranch,
           danger: true,
           ...waiting,
           onSelect: () => uiConfirm({
-            title: "Remove worktree?",
-            body: "This deletes the isolated checkout. Unapplied edits are lost.",
-            confirmLabel: "Remove",
+            title: window.t("chat.gear.removeWorktreeTitle"),
+            body: window.t("chat.gear.removeWorktreeBody"),
+            confirmLabel: window.t("chat.gear.removeLabel"),
             danger: true,
           }).then((ok) => { if (ok) vscode.postMessage({ type: "removeWorktree", sessionId: s.id }); }),
         });
@@ -6349,7 +6349,7 @@
     // in every remote snapshot, empty included, so a capable host always says so.
     if (state.pinnedSessionsKnown) {
       items.push({
-        label: isPinned ? "Unpin conversation" : "Pin conversation",
+        label: isPinned ? window.t("chat.rail.unpinConversation") : window.t("chat.rail.pinConversation"),
         icon: ICON.pin,
         onSelect: () => vscode.postMessage({
           type: "toggleSessionPin",
@@ -6581,10 +6581,10 @@
     // exist. `role`/`tabindex`/keydown put back the semantics the anchor was
     // providing.
     tip.innerHTML =
-      "\u{1F4A1} <b>To move Grok to the right</b>" +
-      "<br>After moving, click <b>Toggle Agents Side Bar</b> to show it." +
-      '<br><span id="welcome-tip-link" class="muted-link" role="button" tabindex="0">Click here</span>' +
-      " and select <b>New Secondary Side Bar Entry</b>.";
+      window.t("chat.welcome.tipMoveTitle") +
+      "<br>" + window.t("chat.welcome.tipMoveStep") +
+      '<br><span id="welcome-tip-link" class="muted-link" role="button" tabindex="0">' + window.t("chat.welcome.tipClickHere") + '</span>' +
+      window.t("chat.welcome.tipSelectEntry");
     welcome.appendChild(tip);
     const link = $("welcome-tip-link");
     if (link) {
@@ -6738,7 +6738,7 @@
           `<p class="onb-desc">${window.t("chat.onb.connectAgentDesc")}</p>` +
           `<div class="onb-agent-grid">` +
             `<button class="onb-agent-tile primary onb-action" type="button" data-act="connectProvider" data-provider="grok">` +
-              `<span class="onb-agent-mark">${providerLogoMarkup("grok")}</span><span><strong>Grok</strong><small>Recommended default</small></span>` +
+              `<span class="onb-agent-mark">${providerLogoMarkup("grok")}</span><span><strong>Grok</strong><small>${window.t("chat.onb.grokRecommended")}</small></span>` +
             `</button>` +
             `<button class="onb-agent-tile onb-action" type="button" data-act="connectProvider" data-provider="codex">` +
               `<span class="onb-agent-mark">${providerLogoMarkup("codex")}</span><span><strong>Codex</strong><small>OpenAI Codex CLI</small></span>` +
@@ -6762,8 +6762,8 @@
             `<code>${installCmd}</code>` +
             `<button class="onb-copy" type="button" title="${window.t("chat.action.copy")}" data-cmd="${installCmd}">${ICON.copy}</button>` +
           `</div>` +
-          `<button class="onb-action" type="button" data-act="runInstall">Open terminal &amp; run</button>` +
-          `<button class="onb-action onb-secondary" type="button" data-act="recheckProvider" data-provider="${info.provider || "grok"}">Re-check connection</button>` +
+          `<button class="onb-action" type="button" data-act="runInstall">${window.t("chat.onb.openTerminalRun")}</button>` +
+          `<button class="onb-action onb-secondary" type="button" data-act="recheckProvider" data-provider="${info.provider || "grok"}">${window.t("chat.onb.recheckConnection")}</button>` +
         `</div>`;
     } else if (mode === "missing-codex") {
       if (ver) setWelcomeStatus(window.t("chat.status.codexNotFound"), false);
@@ -6791,11 +6791,11 @@
           (installing
             ? `<div class="onb-install-progress" role="status"><span>${escapeHtml(progressLabel)}</span>` +
                 (percent == null ? "" : `<progress max="100" value="${percent}">${percent}%</progress>`) +
-                `<button class="onb-action onb-secondary" type="button" data-act="cancelCodexInstall">Cancel</button></div>`
+                `<button class="onb-action onb-secondary" type="button" data-act="cancelCodexInstall">${window.t("common.cancel")}</button></div>`
             : `<button class="onb-action" type="button" data-act="installCodex">Install Codex</button>`) +
-          `<p class="onb-desc onb-manual-label">Or install it yourself, or install the OpenAI ChatGPT extension for VS Code:</p>` +
+          `<p class="onb-desc onb-manual-label">${window.t("chat.onb.manualInstall")}</p>` +
           `<div class="onb-cmd"><code>${installCmd}</code><button class="onb-copy" type="button" title="${window.t("chat.action.copy")}" data-cmd="${installCmd}">${ICON.copy}</button></div>` +
-          `<button class="onb-action onb-secondary" type="button" data-act="recheckProvider" data-provider="codex">Re-check</button>` +
+          `<button class="onb-action onb-secondary" type="button" data-act="recheckProvider" data-provider="codex">${window.t("chat.onb.recheckConnection")}</button>` +
         `</div>`;
     } else if (mode === "codex-login") {
       if (ver) setWelcomeStatus(window.t("chat.status.finishSignIn"), false);
@@ -6831,14 +6831,14 @@
     el.classList.add("collapsible");
     const expandBtn = document.createElement("button");
     expandBtn.className = "msg-expand-btn";
-    expandBtn.textContent = "Show more";
+    expandBtn.textContent = window.t("chat.action.showMore");
     container.appendChild(expandBtn);
     expandBtn.onclick = () => {
       el.classList.remove("collapsible");
       expandBtn.style.display = "none";
       const collapseBtn = document.createElement("button");
       collapseBtn.className = "msg-collapse-btn";
-      collapseBtn.textContent = "Show less";
+      collapseBtn.textContent = window.t("chat.action.showLess");
       container.appendChild(collapseBtn);
       collapseBtn.onclick = () => {
         el.classList.add("collapsible");
@@ -6876,7 +6876,7 @@
       const preview = document.createElement("button");
       preview.type = "button";
       preview.className = "msg-chip-preview";
-      preview.title = `Preview ${name}`;
+      preview.title = window.t("chat.previewTitle", { name });
       const img = document.createElement("img");
       img.src = previewSrc;
       img.alt = "";
@@ -7544,7 +7544,7 @@
       e.stopPropagation();
       const expanding = toggle.getAttribute("aria-expanded") !== "true";
       onToggle(expanding);
-      toggle.textContent = expanding ? "Show less" : currentCollapsedText;
+      toggle.textContent = expanding ? window.t("chat.action.showLess") : currentCollapsedText;
       toggle.setAttribute("aria-expanded", String(expanding));
     };
     return toggle;
@@ -7711,7 +7711,7 @@
     } else if (msg.exitCode == null) {
       const mark = document.createElement("div");
       mark.className = "cmd-out-marker muted";
-      mark.textContent = "[Cancelled] no exit code";
+      mark.textContent = window.t("chat.tool.cancelledNoExit");
       body.appendChild(mark);
     } else if (!hasOutput) {
       // exit 0 with nothing on stdout: a bare "(no output)" pre read as broken.
@@ -7719,7 +7719,7 @@
       // clearer, and there's no empty <pre> to feel like a gap.
       const mark = document.createElement("div");
       mark.className = "cmd-out-marker ok";
-      mark.textContent = "✓ done · no output";
+      mark.textContent = window.t("chat.tool.doneNoOutput");
       body.appendChild(mark);
     }
     // Only render the output <pre> when there's actually output — a marker alone
@@ -7730,7 +7730,7 @@
     if (msg.truncated) {
       const note = document.createElement("div");
       note.className = "cmd-out-marker muted";
-      note.textContent = "output truncated — grok saw the same cut";
+      note.textContent = window.t("chat.tool.outputTruncated");
       body.appendChild(note);
     }
     outRow.appendChild(body);
@@ -7871,7 +7871,7 @@
     if (remaining > 0) {
       const more = document.createElement("div");
       more.className = "tool-diff-more";
-      more.textContent = "... " + remaining + " more line(s) - open diff for the full change";
+      more.textContent = window.t("chat.diff.moreLines", { n: remaining });
       more.hidden = true;
       previewOverflow.push(more);
       wrap.appendChild(more);
@@ -7964,7 +7964,7 @@
       details.appendChild(buildInlineDiffRegion(hunks));
       const preview = document.createElement("button");
       preview.className = "preview-link";
-      preview.textContent = "open diff →";
+      preview.textContent = window.t("chat.diff.openDiff");
       preview.onclick = (e) => {
         e.stopPropagation(); // don't toggle the row/group expand
         requestDiffPreview(diff);
@@ -8180,7 +8180,7 @@
     if (existing) existing.remove();
     const el = document.createElement("div");
     el.className = "session-context-banner";
-    el.textContent = "Context from previous session applied";
+    el.textContent = window.t("chat.contextFromPrevious");
     messagesEl.appendChild(el);
     scrollToBottom();
   }
@@ -8218,7 +8218,7 @@
       const dlBtn = document.createElement("button");
       dlBtn.type = "button";
       dlBtn.className = "generated-media-btn";
-      dlBtn.title = "Download image";
+      dlBtn.title = window.t("chat.image.download");
       dlBtn.innerHTML = ICON.download;
       dlBtn.onclick = async (e) => {
         e.stopPropagation();
@@ -8232,7 +8232,7 @@
     const copyBtn = document.createElement("button");
     copyBtn.type = "button";
     copyBtn.className = "generated-media-btn";
-    copyBtn.title = "Copy path";
+    copyBtn.title = window.t("chat.action.copyPath");
     copyBtn.innerHTML = ICON.copy;
     copyBtn.onclick = (e) => {
       e.stopPropagation();
@@ -8319,11 +8319,11 @@
         // fullId: generated media is already full-size on the wire (remote
         // inlines the whole file as a data: URI; it never downscales).
         if (hostOpensInEditor() && msg.path) {
-          img.title = "Open " + msg.path;
+          img.title = window.t("chat.image.openTitle", { path: msg.path });
           img.style.cursor = "pointer";
           img.onclick = () => vscode.postMessage({ type: "openFile", path: msg.path });
         } else {
-          img.title = "View " + mediaLabel;
+          img.title = window.t("chat.image.viewTitle", { label: mediaLabel });
           img.style.cursor = "pointer";
           img.onclick = () => openImagePreview(msg.src, mediaLabel);
         }
@@ -9398,8 +9398,8 @@
     // (Thinking / tools use the dots for discrete progress instead).
     const verb = state.activeProvider === "codex" ? CODEX_ACTIVITY_VERB : GROK_ACTIVITY_VERB;
     el.innerHTML = `<span class="grokking-icon">${ICON.orbit}</span><span class="grokking-label">${verb}</span>`;
-    el.setAttribute("aria-label", state.activeProvider === "codex" ? "OpenAI is working" : "Grok is working");
-    el.title = "Waiting for response";
+    el.setAttribute("aria-label", state.activeProvider === "codex" ? window.t("chat.status.openaiWorking") : window.t("chat.status.grokWorking"));
+    el.title = window.t("chat.status.waitingForResponse");
     messagesEl.appendChild(el);
     state.grokkingEl = el;
     scrollToBottom();
@@ -9417,7 +9417,7 @@
     if (!state.grokkingEl) return;
     const label = state.grokkingEl.querySelector(".grokking-label");
     if (label) label.textContent = state.activeProvider === "codex" ? CODEX_ACTIVITY_VERB : GROK_ACTIVITY_VERB;
-    state.grokkingEl.setAttribute("aria-label", state.activeProvider === "codex" ? "OpenAI is working" : "Grok is working");
+    state.grokkingEl.setAttribute("aria-label", state.activeProvider === "codex" ? window.t("chat.status.openaiWorking") : window.t("chat.status.grokWorking"));
   }
 
   // "Thinking…" — the stand-in shown while thinking traces are hidden (#26, the
@@ -9766,7 +9766,7 @@
       preview.className = "preview-link";
       // VS Code keeps a re-open action for its native preview; AFK Pilot uses
       // the same control to reveal the inline diff in the tool row above.
-      preview.textContent = "open diff →";
+      preview.textContent = window.t("chat.diff.openDiff");
       preview.onclick = openDiff;
       el.appendChild(preview);
       // Auto-open only where a native editor exists. The in-app overlay would
@@ -10018,8 +10018,8 @@
           const custom = document.createElement("input");
           custom.type = "text";
           custom.className = "question-other-input";
-          custom.placeholder = "Type your answer";
-          custom.setAttribute("aria-label", `${questionText(q)} — Other answer`);
+          custom.placeholder = window.t("chat.question.typeAnswer");
+          custom.setAttribute("aria-label", `${questionText(q)} — ${window.t("chat.question.otherAnswer")}`);
           custom.hidden = true;
           custom.oninput = () => {
             otherText[qi] = custom.value;
@@ -10043,7 +10043,7 @@
       actions.className = "card-actions";
       submitBtn = document.createElement("button");
       submitBtn.className = "primary";
-      submitBtn.textContent = "Submit";
+      submitBtn.textContent = window.t("chat.submit");
       submitBtn.disabled = true;
       submitBtn.onclick = submit;
       actions.appendChild(submitBtn);
@@ -10052,7 +10052,7 @@
 
     skip = document.createElement("button");
     skip.className = "question-skip";
-    skip.textContent = "Skip";
+    skip.textContent = window.t("chat.skip");
     skip.onclick = () => {
       vscode.postMessage({ type: "questionCancel", requestId: req.id });
       collapse(true);
@@ -10270,12 +10270,12 @@
     el.dataset.planReqId = String(req.id);
     const title = document.createElement("div");
     title.className = "card-title";
-    title.textContent = "Plan ready for review";
+    title.textContent = window.t("chat.plan.readyForReview");
     el.appendChild(title);
 
     const sub = document.createElement("div");
     sub.className = "card-subtitle";
-    sub.textContent = "Nothing has been written yet. Approve, reject with feedback, or cancel to leave plan mode.";
+    sub.textContent = window.t("chat.plan.emptyDesc");
     el.appendChild(sub);
 
     const planText = req.plan || "";
@@ -10292,7 +10292,7 @@
     feedback.className = "plan-feedback";
     feedback.rows = 2;
     feedback.setAttribute("dir", "auto");
-    feedback.placeholder = "Optional comment — Grok decides what to do with it";
+    feedback.placeholder = window.t("chat.plan.feedbackPlaceholder");
     el.appendChild(feedback);
 
     const actions = document.createElement("div");
@@ -10335,7 +10335,7 @@
     el.className = "card plan plan-history";
     const title = document.createElement("div");
     title.className = "card-title";
-    title.textContent = "Plan from this session";
+    title.textContent = window.t("chat.plan.fromSession");
     el.appendChild(title);
 
     const sub = document.createElement("div");
@@ -10423,8 +10423,8 @@
       overlay = document.createElement("div");
       overlay.className = "image-preview-overlay";
       overlay.hidden = true;
-      overlay.innerHTML = `<button type="button" class="image-preview-close" aria-label="Close image preview">&times;</button><img>`
-        + `<div class="image-preview-spinner" role="status" aria-label="Loading full-size image" hidden>${ICON.spinner}</div>`;
+      overlay.innerHTML = `<button type="button" class="image-preview-close" aria-label="${window.t("chat.action.closeImagePreview")}">&times;</button><img>`
+        + `<div class="image-preview-spinner" role="status" aria-label="${window.t("chat.action.loadingFullImage")}" hidden>${ICON.spinner}</div>`;
       overlay.onclick = (e) => { if (e.target === overlay) closeImagePreview(); };
       overlay.querySelector(".image-preview-close").onclick = closeImagePreview;
       document.body.appendChild(overlay);
@@ -10522,7 +10522,7 @@
           const preview = document.createElement("button");
           preview.type = "button";
           preview.className = "attachment-preview";
-          preview.title = `Preview ${label}`;
+          preview.title = window.t("chat.previewTitle", { name: label });
           const img = document.createElement("img");
           img.src = previewSrc;
           img.alt = "";
@@ -10538,7 +10538,7 @@
         const rm = document.createElement("button");
         rm.type = "button";
         rm.className = "attachment-remove";
-        rm.title = "Remove";
+        rm.title = window.t("common.delete");
         rm.textContent = "×";
         rm.onclick = (e) => {
           e.stopPropagation();
@@ -10728,12 +10728,12 @@
       sendBtn.disabled = false;
     } else if (state.busyLocked) {
       sendBtn.innerHTML = ICON.spinner;
-      sendBtn.title = "Initializing…";
+      sendBtn.title = window.t("chat.status.initializing");
       sendBtn.classList.add("initializing");
       sendBtn.disabled = true;
     } else if (input.value.trim()) {
       sendBtn.innerHTML = ICON.arrowUp;
-      sendBtn.title = "Queue — sends when Grok finishes";
+      sendBtn.title = window.t("chat.queued.sendTitle");
       sendBtn.disabled = false;
     } else {
       sendBtn.innerHTML = ICON.square;
@@ -10884,11 +10884,11 @@
     micBtn.classList.toggle("connecting", state.mic === "connecting");
     if (IS_REMOTE && (!navigator.mediaDevices?.getUserMedia || !window.AudioWorkletNode)) {
       micBtn.innerHTML = ICON.mic;
-      micBtn.title = "Dictation is not supported by this browser";
+      micBtn.title = window.t("chat.voice.dictationUnsupported");
       micBtn.disabled = true;
     } else if (IS_REMOTE && state.mic === "listening" && !remoteMic) {
       micBtn.innerHTML = ICON.micWaves;
-      micBtn.title = "Dictation is active in another tab on this repository";
+      micBtn.title = window.t("chat.voice.dictationActiveElsewhere");
       micBtn.disabled = true;
     } else if (state.mic === "listening") {
       micBtn.innerHTML = ICON.micWaves;
@@ -10896,15 +10896,15 @@
       micBtn.disabled = false;
     } else if (state.mic === "connecting") {
       micBtn.innerHTML = ICON.spinner;
-      micBtn.title = "Starting mic… wait for the waves before speaking";
+      micBtn.title = window.t("chat.voice.startingMic");
       micBtn.disabled = false; // clickable to cancel
     } else if (state.mic === "transcribing") {
       micBtn.innerHTML = ICON.spinner;
-      micBtn.title = "Transcribing…";
+      micBtn.title = window.t("chat.voice.transcribing");
       micBtn.disabled = true;
     } else if (IS_REMOTE && !state.voiceConfigured) {
       micBtn.innerHTML = ICON.mic;
-      micBtn.title = "Voice dictation is unavailable because the host has no Speech-to-Text credential";
+      micBtn.title = window.t("chat.voice.dictationNoCredential");
       micBtn.disabled = true;
     } else {
       micBtn.innerHTML = ICON.mic;
@@ -12621,7 +12621,7 @@
         const si = document.createElement("div");
         si.id = "summarizing-indicator";
         si.className = "session-context-banner";
-        si.textContent = "Summarizing";
+        si.textContent = window.t("chat.summarizing");
         si.insertAdjacentHTML("beforeend", BLINK_DOTS);
         messagesEl.appendChild(si);
         scrollToBottom();

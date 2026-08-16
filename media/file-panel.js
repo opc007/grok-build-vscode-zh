@@ -356,14 +356,14 @@
     const rootEl = doc.createElement("aside");
     rootEl.id = mount.id || "grok-file-panel";
     rootEl.className = "gfp-panel desk-ft-panel";
-    rootEl.setAttribute("aria-label", "Workspace files");
+    rootEl.setAttribute("aria-label", window.t("filePanel.workspaceFilesAria"));
     rootEl.hidden = true;
 
     const resizer = doc.createElement("div");
     resizer.className = "gfp-resizer desk-ft-resizer";
     resizer.setAttribute("role", "separator");
     resizer.setAttribute("aria-orientation", "vertical");
-    resizer.setAttribute("aria-label", "Resize file panel");
+    resizer.setAttribute("aria-label", window.t("filePanel.resizeAria"));
     resizer.hidden = true;
 
     const header = doc.createElement("div");
@@ -371,16 +371,16 @@
     const title = doc.createElement("button");
     title.type = "button";
     title.className = "gfp-title desk-ft-title";
-    title.title = "Show file tree";
+    title.title = window.t("filePanel.showTreeTitle");
     const tabsEl = doc.createElement("div");
     tabsEl.className = "gfp-tabs desk-ft-tabs";
     tabsEl.setAttribute("role", "tablist");
-    tabsEl.setAttribute("aria-label", "Open files");
+    tabsEl.setAttribute("aria-label", window.t("filePanel.openFilesAria"));
     const closePanel = doc.createElement("button");
     closePanel.type = "button";
     closePanel.className = "gfp-close files-browse-close";
-    closePanel.title = "Close";
-    closePanel.setAttribute("aria-label", "Close file panel");
+    closePanel.title = window.t("common.close");
+    closePanel.setAttribute("aria-label", window.t("filePanel.closePanelAria"));
     closePanel.innerHTML = ICON.close;
     // Desktop-only: the phone overlay already goes full-viewport at the 899
     // dock breakpoint, so a second maximize would fight that layout. The
@@ -400,7 +400,7 @@
     const filter = doc.createElement("input");
     filter.type = "search";
     filter.className = "gfp-filter desk-ft-filter";
-    filter.placeholder = "Filter…";
+    filter.placeholder = window.t("filePanel.filterPlaceholder");
     filter.autocomplete = "off";
     filter.spellcheck = false;
 
@@ -424,7 +424,7 @@
     const toggle = doc.createElement("button");
     toggle.type = "button";
     toggle.className = "gfp-toggle desk-ft-top-toggle";
-    toggle.setAttribute("aria-label", "Toggle file panel");
+    toggle.setAttribute("aria-label", window.t("filePanel.toggleAria"));
     toggle.innerHTML = panelIcon("right");
     toggle.addEventListener("click", () => setOpen(!open));
     closePanel.addEventListener("click", () => setOpen(false));
@@ -699,7 +699,7 @@
           chip.type = "button";
           chip.className = "gfp-overflow-chip";
           chip.setAttribute("aria-haspopup", "menu");
-          chip.setAttribute("aria-label", "More open files");
+          chip.setAttribute("aria-label", window.t("filePanel.moreOpenFilesAria"));
           chip.textContent = "…";
           chip.addEventListener("click", () => openOverflowMenu(chip));
           tabsEl.appendChild(chip);
@@ -896,14 +896,14 @@
       if (currentState !== nextState) abortPending();
       currentState = nextState;
       currentScope = nextState ? nextState.scope : null;
-      title.title = scope && (scope.title || scope.label) || "Show file tree";
+      title.title = scope && (scope.title || scope.label) || window.t("filePanel.showTreeTitle");
       paintTitle();
       filter.value = currentState ? currentState.filter : "";
       treeMode = !(currentState && currentState.activeRelPath);
       renderTabs();
       if (!currentState) {
         renderedTreeState = null;
-        tree.textContent = "No repository selected.";
+        tree.textContent = window.t("filePanel.noRepo");
         viewer.textContent = "";
         viewer.hidden = true;
         tree.hidden = false;
@@ -992,8 +992,8 @@
         more.type = "button";
         more.className = "gfp-icon-button desk-ft-action-btn";
         more.innerHTML = ICON.more;
-        more.title = "More actions";
-        more.setAttribute("aria-label", "More actions");
+        more.title = window.t("filePanel.moreActions");
+        more.setAttribute("aria-label", window.t("filePanel.moreActions"));
         more.addEventListener("click", (event) => {
           event.stopPropagation();
           openRowMenu(more, entry);
@@ -1173,9 +1173,9 @@
       if (!tab) return false;
       if (tab.dirty) {
         const answer = await confirmChoice({
-          title: "Discard changes?",
-          body: "Your edits have not been saved.",
-          actions: [{ id: "discard", label: "Discard", danger: true }],
+          title: window.t("filePanel.discardTitle"),
+          body: window.t("filePanel.discardBody"),
+          actions: [{ id: "discard", label: window.t("common.discard"), danger: true }],
         });
         if (answer !== "discard") return false;
       }
@@ -1229,8 +1229,8 @@
           close.type = "button";
           close.className = "gfp-tab-close desk-ft-tab-close";
           close.innerHTML = ICON.close;
-          close.title = "Close";
-          close.setAttribute("aria-label", "Close " + fileName(relPath));
+          close.title = window.t("common.close");
+          close.setAttribute("aria-label", window.t("filePanel.closeFileAria", { file: fileName(relPath) }));
           close.addEventListener("click", (event) => {
             event.stopPropagation();
             void closeTab(relPath);
@@ -1326,7 +1326,7 @@
       editor.spellcheck = false;
       // Held, not hidden, while a Reload is in flight — see reloadTab.
       editor.readOnly = !!tab.reloading;
-      editor.setAttribute("aria-label", "Edit " + tab.relPath);
+      editor.setAttribute("aria-label", window.t("filePanel.editFileAria", { path: tab.relPath }));
 
       const api = highlighter();
       const lang = api ? api.languageForPath(tab.relPath || "") : "";
@@ -1517,7 +1517,7 @@
           const seg = doc.createElement("div");
           seg.className = "gfp-seg";
           seg.setAttribute("role", "group");
-          seg.setAttribute("aria-label", "View mode");
+          seg.setAttribute("aria-label", window.t("filePanel.viewModeAria"));
           const modeButton = (icon, label, mode) => {
             const button = doc.createElement("button");
             button.type = "button";
@@ -1559,15 +1559,15 @@
           });
           edit.classList.add("gfp-edit", "files-browse-action");
           edit.innerHTML = ICON.pencil;
-          edit.title = "Edit file";
-          edit.setAttribute("aria-label", "Edit file");
+          edit.title = window.t("filePanel.editFileTitle");
+          edit.setAttribute("aria-label", window.t("filePanel.editFileTitle"));
           head.appendChild(edit);
         }
         if (tab.editing) {
-          const cancel = actionButton("Cancel", "", () => void cancelChanges(tab));
+          const cancel = actionButton(window.t("common.cancel"), "", () => void cancelChanges(tab));
           cancel.classList.add("gfp-cancel", "files-browse-action");
           cancel.disabled = tab.saving;
-          const save = actionButton(tab.saving ? "Saving…" : "Save", "primary", () => void saveTab(tab));
+          const save = actionButton(tab.saving ? window.t("filePanel.saving") : window.t("common.save"), "primary", () => void saveTab(tab));
           save.classList.add("gfp-save", "files-browse-action", "files-browse-action-primary");
           save.disabled = tab.saving || !tab.dirty;
           end.append(cancel, save);
@@ -1578,8 +1578,8 @@
         more.classList.add("gfp-more");
         more.classList.add("desk-ft-open-ext");
         more.innerHTML = ICON.more;
-        more.title = "More actions";
-        more.setAttribute("aria-label", "More actions");
+        more.title = window.t("filePanel.moreActions");
+        more.setAttribute("aria-label", window.t("filePanel.moreActions"));
         end.appendChild(more);
       }
       if (end.childNodes.length) head.appendChild(end);
@@ -1596,9 +1596,9 @@
     async function cancelChanges(tab) {
       if (tab.dirty) {
         const answer = await confirmChoice({
-          title: "Cancel changes?",
+          title: window.t("filePanel.cancelChangesTitle"),
           body: "This discards your unsaved edits and restores the last loaded version.",
-          actions: [{ id: "discard", label: "Discard", danger: true }],
+          actions: [{ id: "discard", label: window.t("common.discard"), danger: true }],
         });
         if (answer !== "discard") return false;
       }
@@ -1929,9 +1929,9 @@
     function confirmClose() {
       if (!anyDirty(scopes)) return Promise.resolve(true);
       return confirmChoice({
-        title: "Discard changes?",
-        body: "Your edits have not been saved.",
-        actions: [{ id: "discard", label: "Discard", danger: true }],
+        title: window.t("filePanel.discardTitle"),
+        body: window.t("filePanel.discardBody"),
+        actions: [{ id: "discard", label: window.t("common.discard"), danger: true }],
       }).then((answer) => answer === "discard");
     }
 

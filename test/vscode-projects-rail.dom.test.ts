@@ -6,6 +6,7 @@ import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { Window } from "happy-dom";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { t, dictionaryFor } from "../src/i18n";
 
 const read = (rel: string) => readFileSync(fileURLToPath(new URL(rel, import.meta.url)), "utf8");
 const railSrc = read("../media/projects-rail.js");
@@ -30,6 +31,12 @@ function bootRail() {
   // confirm for destructive menu items in tests that do not exercise them
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).confirm = () => true;
+  // Localized webviews call window.t; provide the real (English) resolver so
+  // rendered text matches the assertions after localization.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).__I18N = { locale: "en", dict: dictionaryFor("en"), locales: ["en", "zh-CN"] };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).t = (k: string, v?: Record<string, string | number>) => t("en", k, v as any);
   doc.body.innerHTML = `
     <aside id="projects-rail" class="projects-rail" aria-label="Projects">
       <div class="rail-search-wrap">

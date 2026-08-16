@@ -98,7 +98,7 @@ describe("close-folder guard wiring", () => {
     // Order is the whole point: confirming after the folder is already gone
     // would be an apology, not a guard.
     expect(asked).toBeLessThan(removed);
-    expect(body).toContain("Close anyway");
+    expect(body).toContain('chat.confirm.closeAnyway');
   });
 
   it("warns about exactly the sessions the revoke will dispose", () => {

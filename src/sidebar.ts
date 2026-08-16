@@ -1109,7 +1109,7 @@ export class GrokSidebar {
       void this.onMessage(m, "local").catch((e) => {
         const msg = (e as Error)?.message ?? String(e);
         this.host.appendLine(`[webview] ${m.type} failed: ${msg}`);
-        void this.host.showErrorMessage(`Grok: ${m.type} failed — ${msg}`);
+        void this.host.showErrorMessage(t(this.activeLocale(), "chat.error.grokFailed", { type: m.type, msg }));
       });
     });
     this.restorePersistedDraft(this.focused);
@@ -1239,7 +1239,7 @@ export class GrokSidebar {
       void this.onProjectsRailMessage(m).catch((e) => {
         const msg = (e as Error)?.message ?? String(e);
         this.host.appendLine(`[projects-rail] ${m.type} failed: ${msg}`);
-        void this.host.showErrorMessage(`Grok Projects: ${m.type} failed — ${msg}`);
+        void this.host.showErrorMessage(t(this.activeLocale(), "chat.error.grokProjectsFailed", { type: m.type, msg }));
       });
     });
   }
@@ -1323,7 +1323,7 @@ export class GrokSidebar {
         void this.trackAttach(this.pickFileFromComputer());
       } else {
         void this.host.showInformationMessage(
-          "Grok: open a file in the editor first, then run this command.",
+          t(this.activeLocale(), "chat.warn.openFileFirst"),
         );
       }
       return;
@@ -1343,8 +1343,7 @@ export class GrokSidebar {
     const relPath = this.conversationRelPath(absPath);
     if (relPath === undefined) {
       void this.host.showWarningMessage(
-        `That file is outside ${path.basename(sessionRoot) || "this project"}, which is where ` +
-          "this conversation is running. Open a conversation in its project first.",
+        t(this.activeLocale(), "chat.warn.fileOutsideProject", { project: path.basename(sessionRoot) || "this project" }),
       );
       return;
     }
@@ -1366,7 +1365,7 @@ export class GrokSidebar {
 
   async pickModel(): Promise<void> {
     if (!this.focused.client || !this.focused.client.availableModels.length) {
-      this.host.showInformationMessage("Start a session first.");
+      this.host.showInformationMessage(t(this.activeLocale(), "chat.warn.startSessionFirst"));
       return;
     }
     const models = this.modelsForSession(
@@ -1383,7 +1382,7 @@ export class GrokSidebar {
       provider: m.provider,
     }));
     const picked = await this.host.showQuickPick(items, {
-      placeHolder: this.focused.hasHistory ? "Pick a model" : "Pick an agent and model",
+      placeHolder: this.focused.hasHistory ? t(this.activeLocale(), "chat.pickModel") : t(this.activeLocale(), "chat.pickAgentAndModel"),
     });
     if (picked) await this.switchModel(picked.modelId, this.focused, undefined, picked.provider);
   }
@@ -1413,12 +1412,12 @@ export class GrokSidebar {
         this.reportRequester(
           requester,
           "warning",
-          `This ${current} conversation can only use ${current} models. Start a new conversation to switch to ${requested}.`,
+          t(this.activeLocale(), "chat.warn.sameProviderModels", { current, requested }),
         );
         return;
       }
       if (!this.connectedProviders().includes(provider)) {
-        this.reportRequester(requester, "warning", `${provider === "codex" ? "Codex" : "Grok"} is not connected.`);
+        this.reportRequester(requester, "warning", t(this.activeLocale(), "chat.warn.providerNotConnected", { provider: provider === "codex" ? "Codex" : "Grok" }));
         return;
       }
       const oldProvider = session.provider;
@@ -1451,7 +1450,7 @@ export class GrokSidebar {
       if (provider === "grok") await cfg.update("defaultModel", modelId, "global");
     } catch (e) {
       if (!isIncompatibleAgentError(e)) {
-        this.reportRequester(requester, "error", `Failed to set model: ${(e as Error).message}`);
+        this.reportRequester(requester, "error", t(this.activeLocale(), "chat.error.setModelFailed", { error: (e as Error).message }));
         return;
       }
       if (!session.hasHistory) {
@@ -1468,11 +1467,11 @@ export class GrokSidebar {
         this.reportRequester(
           requester,
           "warning",
-          "Switching to this model requires restarting the conversation from the VS Code view.",
+          t(this.activeLocale(), "chat.switchModel.restartFromView"),
         );
         return;
       }
-      const mode = await this.pickRestartMode("Switching to this model requires a new session.");
+      const mode = await this.pickRestartMode(t(this.activeLocale(), "chat.switchModel.newSession"));
       if (!mode) return; // dismissed — keep the current model
       await cfg.update("defaultModel", modelId, "global");
       await this.restartSession(mode, session);
@@ -1611,19 +1610,13 @@ ${detail}`,
     if (!cwd || this.autoApproveSource(cwd) !== "project") return true;
     const key = process.platform === "win32" ? path.resolve(cwd).toLowerCase() : path.resolve(cwd);
     if (this.autoApproveConsented.has(key)) return true;
+    const continueAnyway = t(this.activeLocale(), "chat.confirm.continueAnyway");
     const ok = await this.host.showWarningMessage(
-      `"${path.basename(cwd)}" turns off every permission prompt.
-
-` +
-        `This project ships a .grok/config.toml setting permission_mode = "always-approve", which ` +
-        `overrides your own setting. The agent will edit files and run commands here without asking ` +
-        `you first.
-
-Only continue if you trust this code.`,
+      t(this.activeLocale(), "chat.warn.repoForcesAutoApprove", { project: path.basename(cwd) }),
       { modal: true },
-      "Continue anyway",
+      continueAnyway,
     );
-    if (ok !== "Continue anyway") {
+    if (ok !== continueAnyway) {
       this.host.appendLine(`[trust] declined: ${cwd} forces always-approve`);
       return false;
     }
@@ -1653,9 +1646,9 @@ Only continue if you trust this code.`,
   private noticeAlwaysApproveOnce(): void {
     if (this.alwaysApproveNoticeShown) return;
     this.alwaysApproveNoticeShown = true;
-    const OPEN = "Open config.toml";
+    const OPEN = t(this.activeLocale(), "chat.action.openConfigToml");
     void this.host.showInformationMessage(
-      'Grok: "always-approve" is set in your grok config.toml, so tool actions are auto-approved for every session (CLI and extension). The mode shows "Auto accept" to reflect this — the extension can\'t override a global config setting per-session.',
+      t(this.activeLocale(), "chat.info.alwaysApproveNotice"),
       OPEN,
     ).then((pick) => {
       if (pick !== OPEN) return;
@@ -1704,7 +1697,7 @@ Only continue if you trust this code.`,
           this.reportRequester(
             requester,
             "warning",
-            session.planModeUnavailableReason ?? "Plan mode is unavailable for this Grok CLI version.",
+            session.planModeUnavailableReason ?? t(this.activeLocale(), "chat.warn.planModeUnavailable"),
           );
           return;
         }
@@ -1713,7 +1706,7 @@ Only continue if you trust this code.`,
         this.reportRequester(
           requester,
           "warning",
-          session.planModeUnavailableReason ?? "Plan mode is unavailable for this Grok CLI version.",
+          session.planModeUnavailableReason ?? t(this.activeLocale(), "chat.warn.planModeUnavailable"),
         );
         return;
       }
@@ -1757,7 +1750,7 @@ Only continue if you trust this code.`,
       this.setPlanActive(session, true); // posts displayMode → "plan"
       if (session.client) {
         try { await session.client.setMode("plan"); }
-        catch (e) { this.reportRequester(requester, "error", `Couldn't switch mode: ${(e as Error).message}`); }
+        catch (e) { this.reportRequester(requester, "error", t(this.activeLocale(), "chat.error.switchMode", { error: (e as Error).message })); }
       }
       return;
     }
@@ -1772,7 +1765,7 @@ Only continue if you trust this code.`,
           await session.client.setMode(ACT_MODE_ID);
         }
       }
-      catch (e) { this.reportRequester(requester, "error", `Couldn't switch mode: ${(e as Error).message}`); }
+      catch (e) { this.reportRequester(requester, "error", t(this.activeLocale(), "chat.error.switchMode", { error: (e as Error).message })); }
     }
   }
 
@@ -2287,7 +2280,7 @@ Only continue if you trust this code.`,
         this.reportRequester(
           requester,
           "warning",
-          "Steering needs a newer Grok Build CLI — your message was queued instead. Update via Settings → About.",
+          t(this.activeLocale(), "chat.warn.steerNewerCli"),
         );
         return;
       }
@@ -2296,7 +2289,7 @@ Only continue if you trust this code.`,
       this.emit(session, { type: "agentReset" });
       session.queuedSends.length ? (session.queuedSends[0] += "\n\n" + body) : session.queuedSends.push(body);
       this.emit(session, { type: "queuedSends", items: [...session.queuedSends] });
-      this.emit(session, { type: "error", text: `Steer failed: ${e?.message ?? e}. Your message was queued instead.` });
+      this.emit(session, { type: "error", text: t(this.activeLocale(), "chat.error.steerFailed", { error: e?.message ?? e }) });
     }
   }
 
@@ -2311,11 +2304,11 @@ Only continue if you trust this code.`,
    */
   private async forkFocusedSession(session: Session = this.focused, requester?: RemoteRequester): Promise<void> {
     if (!session.client || !session.activeSessionId) {
-      this.reportRequester(requester, "warning", "Start a session before forking it.");
+      this.reportRequester(requester, "warning", t(this.activeLocale(), "chat.warn.startSessionBeforeFork"));
       return;
     }
     if (!session.hasHistory) {
-      this.reportRequester(requester, "info", "Nothing to fork yet — this session has no conversation.");
+      this.reportRequester(requester, "info", t(this.activeLocale(), "chat.info.nothingToFork"));
       return;
     }
     // Resolve the parent's name BEFORE the fork — it names the fork, so it must
@@ -2333,7 +2326,7 @@ Only continue if you trust this code.`,
         this.reportRequester(
           requester,
           "warning",
-          "Forking needs a newer Grok Build CLI. Update via Settings → About.",
+          t(this.activeLocale(), "chat.warn.forkNewerCli"),
         );
         return;
       }
@@ -2374,12 +2367,10 @@ Only continue if you trust this code.`,
       this.reportRequester(
         requester,
         "info",
-        `Forked into "${forkName}". The original conversation is unchanged and is in your session history` +
-          (parentName ? ` as "${parentName}"` : "") +
-          ". Files on disk were not touched.",
+        t(this.activeLocale(), "chat.info.forked", { forkName, parent: parentName ? ` as "${parentName}"` : "" }),
       );
     } catch (e: any) {
-      this.reportRequester(requester, "error", `Fork failed: ${e?.message ?? e}`);
+      this.reportRequester(requester, "error", t(this.activeLocale(), "chat.error.forkFailed", { error: e?.message ?? e }));
     }
   }
 
@@ -2408,7 +2399,7 @@ Only continue if you trust this code.`,
   private async editLastMessage(userBubbleIndex: number, text: string, totalUserBubbles?: number): Promise<void> {
     const session = this.focused;
     if (!session.client || !session.activeSessionId) {
-      return void this.host.showWarningMessage("Start a session before editing a message.");
+      return void this.host.showWarningMessage(t(this.activeLocale(), "chat.warn.startSessionBeforeEdit"));
     }
     if (session.status === "working" || session.status === "needs-you") {
       // Name the state. "Wait for the current turn" is useless when the turn
@@ -2419,15 +2410,15 @@ Only continue if you trust this code.`,
       );
       return void this.host.showWarningMessage(
         session.status === "needs-you"
-          ? "Answer the pending permission or plan card first, then edit your last message."
-          : "Wait for the current turn to finish (or Stop it) before editing your last message.",
+          ? t(this.activeLocale(), "chat.warn.answerPendingCardFirst")
+          : t(this.activeLocale(), "chat.warn.waitTurnFinishEdit"),
       );
     }
     try {
       const points = await session.client.listRewindPoints();
       if (points === "unsupported") {
         return void this.host.showWarningMessage(
-          "Editing a sent message needs a newer Grok Build CLI. Update via Settings → About.",
+          t(this.activeLocale(), "chat.warn.newerCliNeeded"),
         );
       }
       // If the wire's user-facing list no longer matches what the user sees, the
@@ -2438,14 +2429,14 @@ Only continue if you trust this code.`,
           `[rewind] map mismatch: ${userFacingRewindPoints(points).length} wire points vs ${totalUserBubbles} visible messages`,
         );
         return void this.host.showWarningMessage(
-          "Grok's restore points no longer line up with this conversation, so rewinding could remove the wrong turn. Reload the window and try again.",
+          t(this.activeLocale(), "chat.warn.restorePointsMisaligned"),
         );
       }
       const target = resolveEditRewindTarget(points, userBubbleIndex);
       if (!target) {
-        const copy = "Copy text to composer";
+        const copy = t(this.activeLocale(), "chat.confirm.copyToComposer");
         const pick = await this.host.showInformationMessage(
-          "Grok has no restore point for this message, so it can't be rolled back. You can still copy the text and send it again.",
+          t(this.activeLocale(), "chat.info.noRestorePoint"),
           copy,
         );
         if (pick === copy) this.emit(session, { type: "restoreComposer", text });
@@ -2458,9 +2449,9 @@ Only continue if you trust this code.`,
       // not reversible, so that one still asks.
       if (anyFilesAfter(points, target)) {
         const ok = await this.confirmInChat(session, {
-          title: "Edit this message?",
-          body: editRewindConfirmMessage(target, true),
-          confirmLabel: "Edit",
+          title: t(this.activeLocale(), "chat.confirm.editTitle"),
+          body: editRewindConfirmMessage(this.activeLocale(), target, true),
+          confirmLabel: t(this.activeLocale(), "chat.confirm.editLabel"),
           danger: true,
         });
         if (!ok) return;
@@ -2472,12 +2463,12 @@ Only continue if you trust this code.`,
       });
       if (result === "unsupported") {
         return void this.host.showWarningMessage(
-          "Editing a sent message needs a newer Grok Build CLI. Update via Settings → About.",
+          t(this.activeLocale(), "chat.warn.newerCliNeeded"),
         );
       }
       if (!result.success) {
         // Surface the CLI's own words — e.g. rewinding past a compaction point.
-        return void this.host.showErrorMessage(result.error || "Couldn't roll back that message.");
+        return void this.host.showErrorMessage(result.error || t(this.activeLocale(), "chat.error.rollbackFailed"));
       }
 
       const reportedFiles = result.revertedFiles.length;
@@ -2491,32 +2482,32 @@ Only continue if you trust this code.`,
       this.emit(session, { type: "restoreComposer", text });
       if (reportedFiles > 0) {
         void this.host.showInformationMessage(
-          "Message moved back to the composer. Files were rolled back — anything created after that point may still be on disk.",
+          t(this.activeLocale(), "chat.info.messageRolledBack"),
         );
       }
     } catch (e: any) {
-      this.host.showErrorMessage(`Couldn't edit that message: ${e?.message ?? e}`);
+      this.host.showErrorMessage(t(this.activeLocale(), "chat.error.editMessageFailed", { error: e?.message ?? e }));
     }
   }
 
   async rewindFocusedSession(userBubbleIndex?: number, bubbleText?: string, totalUserBubbles?: number): Promise<void> {
     const session = this.focused;
     if (!session.client || !session.activeSessionId) {
-      return void this.host.showWarningMessage("Start a session before rewinding it.");
+      return void this.host.showWarningMessage(t(this.activeLocale(), "chat.warn.startSessionBeforeRewind"));
     }
     if (session.status === "working" || session.status === "needs-you") {
       return void this.host.showWarningMessage(
-        "Wait for the current turn to finish (or Stop it) before rewinding.",
+        t(this.activeLocale(), "chat.warn.waitTurnFinishRewind"),
       );
     }
     if (!session.hasHistory) {
-      return void this.host.showInformationMessage("Nothing to rewind yet — this session has no conversation.");
+      return void this.host.showInformationMessage(t(this.activeLocale(), "chat.info.nothingToRewind"));
     }
     try {
       const points = await session.client.listRewindPoints();
       if (points === "unsupported") {
         return void this.host.showWarningMessage(
-          "Rewind needs a newer Grok Build CLI. Update via Settings → About.",
+          t(this.activeLocale(), "chat.warn.rewindNewerCli"),
         );
       }
 
@@ -2528,7 +2519,7 @@ Only continue if you trust this code.`,
           `[rewind] map mismatch: ${userFacingRewindPoints(points).length} wire points vs ${totalUserBubbles} visible messages`,
         );
         return void this.host.showWarningMessage(
-          "Grok's restore points no longer line up with this conversation, so rewinding could remove the wrong turn. Reload the window and try again.",
+          t(this.activeLocale(), "chat.warn.restorePointsMisaligned"),
         );
       }
       let target: ReturnType<typeof resolveUserBubbleRewind> = null;
@@ -2537,7 +2528,7 @@ Only continue if you trust this code.`,
         target = resolveUserBubbleRewind(points, userBubbleIndex);
         if (!target) {
           return void this.host.showInformationMessage(
-            "Can't rewind to this message — it's the latest turn, or the checkpoint is unavailable.",
+            t(this.activeLocale(), "chat.warn.cantRewindLatest"),
           );
         }
       } else {
@@ -2547,8 +2538,8 @@ Only continue if you trust this code.`,
         if (selectable.length === 0) {
           return void this.host.showInformationMessage(
             facing.length <= 1
-              ? "Only one message so far — hover an earlier user message and click Rewind."
-              : "No rewind points available.",
+              ? t(this.activeLocale(), "chat.rewind.onlyOneMessage")
+              : t(this.activeLocale(), "chat.rewind.noPoints"),
           );
         }
         // Number each entry by its place among the user's VISIBLE messages, not
@@ -2566,7 +2557,7 @@ Only continue if you trust this code.`,
           }));
         const pick = await this.host.showQuickPick(items, {
           // Execute discards the chosen message too, not just what follows it.
-          placeHolder: "Rewind past which message? (it and everything after it are discarded)",
+          placeHolder: t(this.activeLocale(), "chat.rewind.placeholder"),
           ignoreFocusOut: true,
           matchOnDescription: true,
           matchOnDetail: true,
@@ -2581,9 +2572,9 @@ Only continue if you trust this code.`,
       const revertsFiles = anyFilesAfter(points, target);
       if (revertsFiles) {
         const ok = await this.confirmInChat(session, {
-          title: "Rewind past this message?",
-          body: rewindConfirmMessage(target, "all"),
-          confirmLabel: "Rewind",
+          title: t(this.activeLocale(), "chat.confirm.rewindTitle"),
+          body: rewindConfirmMessage(this.activeLocale(), target, "all"),
+          confirmLabel: t(this.activeLocale(), "chat.confirm.rewindLabel"),
           danger: true,
         });
         if (!ok) return;
@@ -2595,11 +2586,11 @@ Only continue if you trust this code.`,
       });
       if (result === "unsupported") {
         return void this.host.showWarningMessage(
-          "Rewind needs a newer Grok Build CLI. Update via Settings → About.",
+          t(this.activeLocale(), "chat.warn.rewindNewerCli"),
         );
       }
       if (!result.success) {
-        const err = result.error || "Rewind did not apply (no changes).";
+        const err = result.error || t(this.activeLocale(), "chat.error.rewindNoChange");
         return void this.host.showErrorMessage(err);
       }
 
@@ -2632,11 +2623,11 @@ Only continue if you trust this code.`,
       // visible in the chat, so those still get reported.
       if (reportedFiles > 0) {
         void this.host.showInformationMessage(
-          "Rewound. Files were rolled back — anything created after that point may still be on disk.",
+          t(this.activeLocale(), "chat.info.rewoundFiles"),
         );
       }
     } catch (e: any) {
-      void this.host.showErrorMessage(`Rewind failed: ${e?.message ?? e}`);
+      void this.host.showErrorMessage(t(this.activeLocale(), "chat.error.rewindFailed", { error: e?.message ?? e }));
     }
   }
 
@@ -2652,7 +2643,7 @@ Only continue if you trust this code.`,
   ): Promise<void> {
     const cmd = workflowControlCommand(action, displayName);
     if (!cmd) {
-      return void this.host.showWarningMessage("Missing workflow display name.");
+      return void this.host.showWarningMessage(t(this.activeLocale(), "chat.warn.missingWorkflowName"));
     }
     await this.handleSend(cmd, true, session);
   }
@@ -2741,7 +2732,7 @@ Only continue if you trust this code.`,
     // inside a worktree; guard the Command-Palette path too.
     if (this.focused.worktree) {
       return void this.host.showInformationMessage(
-        "You're already in a worktree. Start a new worktree from a normal session — worktrees don't nest.",
+        t(this.activeLocale(), "chat.warn.alreadyInWorktree"),
       );
     }
     // The CONVERSATION's repository — not the open folder, and not the rail's
@@ -2761,7 +2752,7 @@ Only continue if you trust this code.`,
     const sourcePath = this.sessionCwd(this.focused);
     if (!isGitRepo(sourcePath, fs)) {
       return void this.host.showWarningMessage(
-        "Worktree sessions need a git repository. Open a folder that is a git checkout (or run git init).",
+        t(this.activeLocale(), "chat.warn.worktreeNeedsGit"),
       );
     }
     // One at a time. Creation reuses whatever live client the project already
@@ -2773,7 +2764,7 @@ Only continue if you trust this code.`,
     // (remote-policy keeps `newWorktreeSession` host-local).
     if (this.worktreeCreateInFlight) {
       return void this.host.showWarningMessage(
-        "A worktree is already being created. Wait for it to finish before starting another.",
+        t(this.activeLocale(), "chat.warn.worktreeInFlight"),
       );
     }
     this.worktreeCreateInFlight = true;
@@ -2797,8 +2788,8 @@ Only continue if you trust this code.`,
     let label = "";
     if (!opts?.fromRemote) {
       const rawLabel = await this.host.showInputBox({
-        prompt: "Worktree label (optional)",
-        placeHolder: "e.g. feat-auth — leave blank for an auto name",
+        prompt: t(this.activeLocale(), "chat.worktree.labelPrompt"),
+        placeHolder: t(this.activeLocale(), "chat.worktree.labelPlaceholder"),
         ignoreFocusOut: true,
       });
       if (rawLabel === undefined) return; // cancelled
@@ -2806,7 +2797,7 @@ Only continue if you trust this code.`,
     }
 
     await this.host.withProgress(
-      { title: "Creating git worktree…", cancellable: false },
+      { title: t(this.activeLocale(), "chat.worktree.creating"), cancellable: false },
       async () => {
         try {
           // Create needs a live sessionId. Prefer a workspace-cwd client so we
@@ -2814,7 +2805,7 @@ Only continue if you trust this code.`,
           // otherwise spin a short-lived ACP client just for the create RPC.
           const creator = await this.clientForWorktreeCreate(sourcePath);
           if (!creator) {
-            return void this.host.showErrorMessage("Could not start Grok to create a worktree.");
+            return void this.host.showErrorMessage(t(this.activeLocale(), "chat.error.cannotStartGrokWorktree"));
           }
           const { client, disposeAfter } = creator;
           // Disposed after the LAST validation query, not here and not at the
@@ -2863,7 +2854,7 @@ Only continue if you trust this code.`,
             if (created === "unsupported") {
               watch.cancel();
               return void this.host.showWarningMessage(
-                "Worktrees need a newer Grok Build CLI. Update via Settings → About.",
+                t(this.activeLocale(), "chat.warn.worktreeNewerCli"),
               );
             }
             const wtPath = created.worktreePath;
@@ -2885,7 +2876,7 @@ Only continue if you trust this code.`,
             const outcome = await watch.settled(wtPath);
             if (outcome === "failed") {
               return void this.host.showErrorMessage(
-                `Worktree "${wtLabel}" was not created: the Grok CLI reported it failed.`,
+                t(this.activeLocale(), "chat.error.worktreeNotCreated", { label: wtLabel }),
               );
             }
             if (outcome === "stalled") {
@@ -2894,7 +2885,7 @@ Only continue if you trust this code.`,
               // difference, because registration lands before the files do.
               this.host.appendLine(`[worktree] create reported progress then stalled: ${wtPath}`);
               return void this.host.showErrorMessage(
-                `Worktree "${wtLabel}" never finished being created, so no session was started. The partial checkout was left at ${wtPath}.`,
+                t(this.activeLocale(), "chat.error.worktreeNeverFinished", { label: wtLabel, path: wtPath }),
               );
             }
             if (outcome === "silent") {
@@ -2910,7 +2901,7 @@ Only continue if you trust this code.`,
             const ready = await this.waitForWorktreeReady(wtPath, 30000);
             if (!ready) {
               return void this.host.showErrorMessage(
-                `Worktree "${wtLabel}" was created but its checkout never appeared on disk — the session wasn't started. Try again, or check \`git worktree list\`.`,
+                t(this.activeLocale(), "chat.error.worktreeCheckoutMissing", { label: wtLabel }),
               );
             }
 
@@ -2932,7 +2923,7 @@ Only continue if you trust this code.`,
                 `[worktree] refused: create claims source ${claimedGitRoot}, but ${sourcePath} is in ${sourceGitRoot}`,
               );
               return void this.host.showErrorMessage(
-                `Worktree "${wtLabel}" came back attributed to a different repository, so no session was started.`,
+                t(this.activeLocale(), "chat.error.worktreeWrongRepo", { label: wtLabel }),
               );
             }
             // Ask more than once. The create RPC returns as soon as git is asked,
@@ -2976,7 +2967,7 @@ Only continue if you trust this code.`,
               // see. We do not delete it: it is real work on disk and this path
               // is reached precisely when we could NOT establish what it is.
               return void this.host.showErrorMessage(
-                `Worktree "${wtLabel}" could not be confirmed as part of this repository, so no session was started. The checkout was left at ${wtPath} — remove it yourself if you don't want it.`,
+                t(this.activeLocale(), "chat.error.worktreeUnconfirmed", { label: wtLabel, path: wtPath }),
               );
             }
             // "A worktree of this repo" is not the same claim as "the worktree
@@ -2988,7 +2979,7 @@ Only continue if you trust this code.`,
                 `[worktree] refused: ${wtPath} already existed before this create`,
               );
               return void this.host.showErrorMessage(
-                `Worktree "${wtLabel}" already existed before this request, so no session was started. Open it from the conversation list instead.`,
+                t(this.activeLocale(), "chat.error.worktreeAlreadyExisted", { label: wtLabel }),
               );
             }
 
@@ -3048,14 +3039,14 @@ Only continue if you trust this code.`,
             }
               this.postSessionsList();
               void this.host.showInformationMessage(
-                `Worktree session ready: ${wtLabel}. Edits stay isolated until you Apply worktree.`,
+                t(this.activeLocale(), "chat.info.worktreeSessionReady", { label: wtLabel }),
               );
           } finally {
             // Belt: every early return above lands here too.
             await releaseCreator();
           }
         } catch (e: any) {
-          void this.host.showErrorMessage(`Create worktree failed: ${e?.message ?? e}`);
+          void this.host.showErrorMessage(t(this.activeLocale(), "chat.error.createWorktreeFailed", { error: e?.message ?? e }));
         }
       },
     );
@@ -3297,34 +3288,37 @@ Only continue if you trust this code.`,
     const wt = session.worktree;
     if (!wt) {
       return void this.host.showInformationMessage(
-        "This session is not in a worktree. Start one with Grok: New Worktree Session.",
+        t(this.activeLocale(), "chat.warn.notInWorktreeHint"),
       );
     }
     if (!session.client?.sessionId) {
-      return void this.host.showWarningMessage("Start the session before applying its worktree.");
+      return void this.host.showWarningMessage(t(this.activeLocale(), "chat.warn.startSessionBeforeApply"));
     }
     if (!skipConfirm) {
+      const applyLabel = t(this.activeLocale(), "chat.gear.applyLabel");
       const ok = await this.host.showWarningMessage(
-        `Apply worktree "${wt.label}" into the main checkout?\n\n${wt.path}\n→ ${wt.sourceGitRoot || this.workspaceRoot()}`,
+        t(this.activeLocale(), "chat.confirm.applyWorktreeTitle", { label: wt.label, path: wt.path, root: wt.sourceGitRoot || this.workspaceRoot() }),
         { modal: true },
-        "Apply",
+        applyLabel,
       );
-      if (ok !== "Apply") return;
+      if (ok !== applyLabel) return;
     }
     try {
       const r = await session.client.applyWorktree(wt.path);
       if (r === "unsupported") {
         return void this.host.showWarningMessage(
-          "Apply worktree needs a newer Grok Build CLI. Update via Settings → About.",
+          t(this.activeLocale(), "chat.warn.applyWorktreeNewerCli"),
         );
       }
       const n = r.files?.length ?? 0;
       this.host.appendLine(`[worktree] apply ${wt.path}: ${n} file(s), status=${r.status}`);
       void this.host.showInformationMessage(
-        n ? `Applied ${n} file${n === 1 ? "" : "s"} from worktree "${wt.label}".` : `Worktree "${wt.label}" applied (no file changes).`,
+        n
+          ? t(this.activeLocale(), "chat.info.worktreeAppliedFiles", { n, label: wt.label })
+          : t(this.activeLocale(), "chat.info.worktreeAppliedNone", { label: wt.label }),
       );
     } catch (e: any) {
-      void this.host.showErrorMessage(`Apply worktree failed: ${e?.message ?? e}`);
+      void this.host.showErrorMessage(t(this.activeLocale(), "chat.error.applyWorktreeFailed", { error: e?.message ?? e }));
     }
   }
 
@@ -3333,15 +3327,16 @@ Only continue if you trust this code.`,
   async removeFocusedWorktree(session: Session = this.focused, skipConfirm = false): Promise<void> {
     const wt = session.worktree;
     if (!wt) {
-      return void this.host.showInformationMessage("This session is not in a worktree.");
+      return void this.host.showInformationMessage(t(this.activeLocale(), "chat.warn.notInWorktree"));
     }
     if (!skipConfirm) {
+      const removeLabel = t(this.activeLocale(), "chat.gear.removeLabel");
       const ok = await this.host.showWarningMessage(
-        `Remove worktree "${wt.label}"?\n\n${wt.path}\n\nThis deletes the isolated checkout. Unapplied edits are lost.`,
+        t(this.activeLocale(), "chat.confirm.removeWorktreeTitle", { label: wt.label, path: wt.path }),
         { modal: true },
-        "Remove",
+        removeLabel,
       );
-      if (ok !== "Remove") return;
+      if (ok !== removeLabel) return;
     }
     try {
       // Any live process still using the worktree as cwd locks remove on Windows.
@@ -3367,7 +3362,7 @@ Only continue if you trust this code.`,
       if (!client) {
         const tmp = await this.clientForWorktreeCreate(this.workspaceRoot());
         if (!tmp) {
-          return void this.host.showErrorMessage("Could not start Grok to remove the worktree.");
+          return void this.host.showErrorMessage(t(this.activeLocale(), "chat.error.cannotStartGrokRemoveWorktree"));
         }
         client = tmp.client;
         disposeAfter = tmp.disposeAfter;
@@ -3392,7 +3387,7 @@ Only continue if you trust this code.`,
           if (refusal) {
             this.host.appendLine(`[worktree] self-remove refused: ${refusal}`);
             void this.host.showErrorMessage(
-              `Remove worktree failed: ${detail}. The checkout at ${wt.path} was left alone because ${refusal}.`,
+              t(this.activeLocale(), "chat.error.removeWorktreeFailedDetail", { error: detail, path: wt.path, reason: refusal }),
             );
             return;
           }
@@ -3407,7 +3402,7 @@ Only continue if you trust this code.`,
       }
       if (r === "unsupported") {
         return void this.host.showWarningMessage(
-          "Remove worktree needs a newer Grok Build CLI. Update via Settings → About.",
+          t(this.activeLocale(), "chat.warn.removeWorktreeNewerCli"),
         );
       }
       // WHO OWNED IT — captured before the records that answer that are erased.
@@ -3461,13 +3456,13 @@ Only continue if you trust this code.`,
         this.remoteClients.deleteActive(holder);
         this.sendRemoteClient(holder, {
           type: "error",
-          text: `Worktree "${wt.label}" was removed in VS Code, so that conversation ended. This tab now has a fresh session in its selected repository.`,
+          text: t(this.activeLocale(), "chat.info.worktreeRemovedRemote", { label: wt.label }),
         });
         for (const message of this.buildRemoteSnapshot(holder)) this.sendRemoteClient(holder, message);
       }
-      void this.host.showInformationMessage(`Removed worktree "${wt.label}".`);
+      void this.host.showInformationMessage(t(this.activeLocale(), "chat.info.removedWorktree", { label: wt.label }));
     } catch (e: any) {
-      void this.host.showErrorMessage(`Remove worktree failed: ${e?.message ?? e}`);
+      void this.host.showErrorMessage(t(this.activeLocale(), "chat.error.removeWorktreeFailed", { error: e?.message ?? e }));
     }
   }
 
@@ -4237,7 +4232,7 @@ Only continue if you trust this code.`,
         // must still open when the view switch is refused.
         if (options.warnOnRefusal !== false) {
           void this.host.showWarningMessage(
-            `That folder is not open in this app:\n${target}`,
+            t(this.activeLocale(), "chat.warn.folderNotOpen", { target }),
           );
         }
         return;
@@ -4380,7 +4375,7 @@ Only continue if you trust this code.`,
       return;
     }
     if (!this.host.addWorkspaceFolder(folder)) {
-      void this.host.showWarningMessage(`Could not open folder:\n${folder}`);
+      void this.host.showWarningMessage(t(this.activeLocale(), "chat.error.cannotOpenFolder", { folder }));
       return;
     }
     this.authEpoch++;
@@ -4404,7 +4399,7 @@ Only continue if you trust this code.`,
       ok = false;
     }
     if (!ok) {
-      void this.host.showWarningMessage(`Not a folder:\n${resolved}`);
+      void this.host.showWarningMessage(t(this.activeLocale(), "chat.error.notAFolder", { resolved }));
       return;
     }
     const key = normalizeRepoPath(resolved);
@@ -4462,13 +4457,15 @@ Only continue if you trust this code.`,
     if (working.length) {
       const many = working.length > 1;
       const ok = await this.host.showWarningMessage(
-        `Hide "${path.basename(cwd)}"?\n\n` +
-          `${many ? `${working.length} conversations are` : "A conversation is"} still working. ` +
-          `Hiding it ends ${many ? "them" : "it"} and discards the turn in progress.`,
+        t(this.activeLocale(), "chat.confirm.hideProjectTitle", {
+          name: path.basename(cwd),
+          work: many ? `${working.length} conversations are` : "A conversation is",
+          them: many ? "them" : "it",
+        }),
         { modal: true },
-        "Hide anyway",
+        t(this.activeLocale(), "chat.confirm.hideAnyway"),
       );
-      if (ok !== "Hide anyway") return;
+      if (ok !== t(this.activeLocale(), "chat.confirm.hideAnyway")) return;
     }
     // Never the open workspace folder. Its authorization does not come from the
     // catalog — `localTrustedSessionCwds` adds `workspaceRoot()` on its own — so
@@ -4476,8 +4473,7 @@ Only continue if you trust this code.`,
     // A revocation that does not revoke is worse than no button at all.
     if (pathsEqual(cwd, this.workspaceRoot() || "")) {
       void this.host.showWarningMessage(
-        "This is the folder VS Code has open, so it cannot be removed from the list. " +
-          "Close the folder in VS Code instead.",
+        t(this.activeLocale(), "chat.warn.cannotRemoveWorkspaceFolder"),
       );
       return;
     }
@@ -4557,20 +4553,21 @@ Only continue if you trust this code.`,
     if (working.length) {
       const many = working.length > 1;
       const ok = await this.host.showWarningMessage(
-        `Close "${path.basename(target)}"?
-
-${many ? `${working.length} conversations are` : "A conversation is"} still working. ` +
-          `Closing ends ${many ? "them" : "it"} and discards the turn in progress.`,
+        t(this.activeLocale(), "chat.confirm.closeFolderTitle", {
+          name: path.basename(target),
+          work: many ? `${working.length} conversations are` : "A conversation is",
+          them: many ? "them" : "it",
+        }),
         { modal: true },
-        "Close anyway",
+        t(this.activeLocale(), "chat.confirm.closeAnyway"),
       );
-      if (ok !== "Close anyway") return;
+      if (ok !== t(this.activeLocale(), "chat.confirm.closeAnyway")) return;
     }
 
     const activeRoot = this.host.workspaceRoot();
     const wasActive = !!activeRoot && pathsEqual(target, activeRoot);
     if (!this.host.removeWorkspaceFolder(target)) {
-      void this.host.showWarningMessage(`Could not close folder:\n${target}`);
+      void this.host.showWarningMessage(t(this.activeLocale(), "chat.error.cannotCloseFolder", { target }));
       return;
     }
     // Revoke first so a concurrent remote send cannot still route to a doomed
@@ -5224,12 +5221,12 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       // .svg extension, so a save-dialog filter can't distinguish them — quick-pick).
       const mark = (which: string) => (msg.current === which ? "  (current theme)" : "");
       const items = [
-        { label: "PNG", description: "raster, VS Code theme background", fmt: "png" },
-        { label: `SVG — for dark background${mark("dark")}`, description: "transparent, light ink", fmt: "svgDark" },
-        { label: `SVG — for light background${mark("light")}`, description: "transparent, dark ink", fmt: "svgLight" },
+        { label: "PNG", description: t(this.activeLocale(), "chat.export.pngDesc"), fmt: "png" },
+        { label: `SVG — for dark background${mark("dark")}`, description: t(this.activeLocale(), "chat.export.svgDarkDesc"), fmt: "svgDark" },
+        { label: `SVG — for light background${mark("light")}`, description: t(this.activeLocale(), "chat.export.svgLightDesc"), fmt: "svgLight" },
       ];
       const pick = await this.host.showQuickPick(items, {
-        placeHolder: `Export ${base} as…`,
+        placeHolder: t(this.activeLocale(), "chat.export.placeholder", { base }),
       });
       if (!pick) return;
 
@@ -5250,7 +5247,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       }
     } catch (e) {
       this.host.appendLine(`[export] failed: ${(e as Error).message}`);
-      void this.host.showErrorMessage(`Export failed: ${(e as Error).message}`);
+      void this.host.showErrorMessage(t(this.activeLocale(), "chat.error.exportFailed", { error: (e as Error).message }));
     }
   }
 
@@ -5263,15 +5260,15 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
     if (provider === "codex") {
       const cliPath = this.codexCliPath || this.locateProvider("codex");
       if (!cliPath) {
-        await this.host.showErrorMessage("Codex sign-out could not run because the Codex CLI was not found. The account remains connected.");
+        await this.host.showErrorMessage(t(this.activeLocale(), "chat.error.codexSignOutNoCli"));
         return;
       }
       const choice = await this.host.showWarningMessage(
-        "Sign out of Codex? This clears the Codex CLI's cached credentials.",
+        t(this.activeLocale(), "chat.confirm.signOutCodex"),
         { modal: true },
-        "Sign Out",
+        t(this.activeLocale(), "common.signOut"),
       );
-      if (choice !== "Sign Out") return;
+      if (choice !== t(this.activeLocale(), "common.signOut")) return;
       try {
         await execGrokCli(cliPath, ["logout"], { timeout: 30_000, windowsHide: true });
       } catch (error) {
@@ -5279,10 +5276,10 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
         if (code === "ENOENT" || code === "EACCES" || code === "EPERM") {
           this.host.createTerminal({ name: "Codex Logout", shellPath: cliPath, shellArgs: ["logout"] }).show();
           await this.host.showErrorMessage(
-            "Codex sign-out could not be observed, so it was opened in a terminal. The account remains connected until sign-out is confirmed.",
+            t(this.activeLocale(), "chat.info.codexSignOutTerminal"),
           );
         } else {
-          await this.host.showErrorMessage(`Codex sign-out failed: ${errorDetail(error)}. The account remains connected.`);
+          await this.host.showErrorMessage(t(this.activeLocale(), "chat.error.codexSignOutFailed", { error: errorDetail(error) }));
         }
         return;
       }
@@ -5295,11 +5292,11 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       return;
     }
     const choice = await this.host.showWarningMessage(
-      "Sign out of Grok? This clears the CLI's cached credentials.",
+      t(this.activeLocale(), "chat.confirm.signOutGrok"),
       { modal: true },
-      "Sign Out",
+      t(this.activeLocale(), "common.signOut"),
     );
-    if (choice !== "Sign Out") return;
+    if (choice !== t(this.activeLocale(), "common.signOut")) return;
     // shellPath/shellArgs, not sendText — a quoted path typed into PowerShell
     // is a parser error (see runMcpList).
     this.host.createTerminal({ name: "Grok Logout", shellPath: cliPath, shellArgs: ["logout"] });
@@ -5316,7 +5313,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       const detail = errorDetail(error);
       this.host.appendLine(`[providers] ${providerName} signed out, but saving connection state failed: ${detail}`);
       await this.host.showErrorMessage(
-        `${providerName} signed out and its conversations were reset, but the disconnected state could not be saved: ${detail}`,
+        t(this.activeLocale(), "chat.error.signOutSaveFailed", { provider: providerName, detail }),
       );
     }
     await reset;
@@ -5722,14 +5719,15 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
     if (nextCache) void this.state.update(CLI_VERSION_CACHE_KEY, nextCache);
     if (decision.available) {
       if (usedCache) {
-        this.host.appendLine("grok --version failed; using last verified version for Plan mode.");
+        this.host.appendLine(t(this.activeLocale(), "chat.warn.usingCachedPlanVersion"));
       }
       return { planModeAvailable: true, planModeVersionVerified: decision.verified, usedCache };
     }
     if (decision.verified) {
-      const message =
-        `grok CLI ${decision.installed} is below required version ${GROK_REQUIRED_VERSION}; ` +
-        "Plan mode is unavailable.";
+      const message = t(this.activeLocale(), "chat.warn.planModeVersionBelow", {
+        installed: decision.installed,
+        required: GROK_REQUIRED_VERSION,
+      });
       this.host.appendLine(message);
       if (notify) void this.host.showWarningMessage(message);
       return {
@@ -5741,15 +5739,11 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
     }
     // Unverified: log + optional toast once at session start; a later Plan pick
     // re-probes without forcing a restart (#105).
-    const message =
-      `Could not verify the Grok CLI version (the check failed or timed out — a first run after install can be slow). ` +
-      `Plan mode is unavailable until it can be checked. Pick Plan again or reload the window to retry. ` +
-      `Continuing best-effort with the current binary.`;
+    const message = t(this.activeLocale(), "chat.warn.cliVersionUnverifiedFull");
     this.host.appendLine(message);
     if (notify) {
       void this.host.showWarningMessage(
-        `Could not verify the Grok CLI version (the check failed or timed out — a first run after install can be slow). ` +
-          `Pick Plan again or reload the window to retry.`,
+        t(this.activeLocale(), "chat.warn.cliVersionUnverified"),
       );
     }
     return {
@@ -5830,8 +5824,8 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       if (stdout?.trim()) this.host.appendLine(stdout.trim());
       if (stderr?.trim()) this.host.appendLine(stderr.trim());
       const detail = reason === "proactive"
-        ? `Grok CLI ${fromVersion} has a known Windows startup issue (issue #22). Switched to the supported version ${GROK_STDIO_DOWNGRADE_TARGET}.`
-        : `Grok CLI ${fromVersion} failed to start a session (issue #22). Switched to the supported version ${GROK_STDIO_DOWNGRADE_TARGET} and retrying.`;
+        ? t(this.activeLocale(), "chat.info.cliDowngradeProactive", { from: fromVersion, target: GROK_STDIO_DOWNGRADE_TARGET })
+        : t(this.activeLocale(), "chat.info.cliDowngradeReactive", { from: fromVersion, target: GROK_STDIO_DOWNGRADE_TARGET });
       void this.host.showInformationMessage(detail);
       return true;
     } catch (e) {
@@ -5901,7 +5895,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
     const policy = grokUpdatePolicy(await this.readGrokVersion(cliPath), process.platform);
     if (!policy.allow) {
       void this.host.showInformationMessage(
-        policy.note ?? "Grok CLI updates are paused for compatibility.",
+        policy.note ?? t(this.activeLocale(), "chat.info.updatesPausedCompat"),
       );
       return;
     }
@@ -5916,11 +5910,11 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
     ).length;
     if (busy > 0) {
       const choice = await this.host.showWarningMessage(
-        `Updating the Grok Build CLI will stop ${busy} session${busy === 1 ? "" : "s"} currently in progress. Continue?`,
+        t(this.activeLocale(), "chat.confirm.updateCli", { busy }),
         { modal: true },
-        "Update Anyway",
+        t(this.activeLocale(), "chat.confirm.updateAnyway"),
       );
-      if (choice !== "Update Anyway") return;
+      if (choice !== t(this.activeLocale(), "chat.confirm.updateAnyway")) return;
     }
     const resumeId = this.focused.activeSessionId;
     const resumeCwd = this.focused.cwd;
@@ -5967,7 +5961,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
         }
         this.host.appendLine(`grok update failed: ${msg}`);
         if (notifyFailure) {
-          void this.host.showWarningMessage(`Grok Build update failed: ${msg}`);
+          void this.host.showWarningMessage(t(this.activeLocale(), "chat.error.updateFailed", { error: msg }));
         }
         return false;
       }
@@ -5981,11 +5975,11 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
   private async pickRestartMode(message: string): Promise<"clear" | "summarize" | undefined> {
     const choice = await this.host.showInformationMessage(
       message,
-      "Summarize & Restart",
-      "Just Restart",
+      t(this.activeLocale(), "chat.confirm.summarizeRestart"),
+      t(this.activeLocale(), "chat.confirm.justRestart"),
     );
     if (!choice) return undefined;
-    return choice === "Just Restart" ? "clear" : "summarize";
+    return choice === t(this.activeLocale(), "chat.confirm.justRestart") ? "clear" : "summarize";
   }
 
   /** Restart the session. "clear" drops the visible history; "summarize" first
@@ -6489,8 +6483,8 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       const label = summarizeBackgroundCommand(cmd);
       const text = `Grok background task ${ok ? "completed" : `exited (code ${exit})`}${label ? `: ${label}` : ""}`;
       this.host.appendLine(`[task] ${text}`);
-      void this.host.showInformationMessage(text, "Show Logs").then((choice) => {
-        if (choice === "Show Logs") this.host.showOutput();
+      void this.host.showInformationMessage(text, t(this.activeLocale(), "chat.action.showLogs")).then((choice) => {
+        if (choice === t(this.activeLocale(), "chat.action.showLogs")) this.host.showOutput();
       });
     });
     client.on("toolCall", (u) => {
@@ -6991,7 +6985,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
             `\`grok update --version ${GROK_STDIO_DOWNGRADE_TARGET}\` in a terminal, then start a new session.`,
         });
       } else {
-        this.emit(session, { type: "error", text: `Failed to start ${session.provider === "codex" ? "Codex" : "Grok"}: ${msg}` });
+        this.emit(session, { type: "error", text: t(this.activeLocale(), "chat.error.cannotStartProvider", { provider: session.provider === "codex" ? "Codex" : "Grok", msg }) });
       }
       return undefined;
     }
@@ -7520,11 +7514,11 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
           this.reportRequester(
             requester,
             "warning",
-            "Changing reasoning effort here requires restarting the conversation from the VS Code view.",
+            t(this.activeLocale(), "chat.warn.reasoningEffortRestartRemote"),
           );
           break;
         }
-        const mode = await this.pickRestartMode("Changing reasoning effort requires restarting the session.");
+        const mode = await this.pickRestartMode(t(this.activeLocale(), "chat.warn.reasoningEffortRestart"));
         if (!mode) break; // dismissed — leave defaultEffort untouched
         await cfg2.update("defaultEffort", newLevel, "global");
         await this.restartSession(mode, session);
@@ -9160,7 +9154,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       else if (inThisConversation) this.reportRequester(
         origin === "remote" && clientId ? this.captureRemoteRequester(clientId) : undefined,
         "info",
-        "No history to clear.",
+        t(this.activeLocale(), "chat.info.noHistoryToClear"),
       );
       this.refreshRemoteRepoPreview(clientId, cwd);
       return;
@@ -9277,7 +9271,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       } catch (e) {
         // Per-file: one unreadable pick must not abort the rest of a multi-select.
         this.host.appendLine(`[image] could not attach ${filePath}: ${(e as Error).message}`);
-        void this.host.showErrorMessage(`Grok: could not attach ${path.basename(filePath)} — ${(e as Error).message}`);
+        void this.host.showErrorMessage(t(this.activeLocale(), "chat.error.attachFailed", { file: path.basename(filePath), error: (e as Error).message }));
       }
     }
     this.revealAndFocusComposer();
@@ -9399,10 +9393,10 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
   /** Active UI locale. `grok.language` defaults to "auto", which resolves to the
    *  OS / VS Code UI language so a Chinese system opens in 简体中文 out of the box. */
   private activeLocale(): Locale {
-    return localeFromConfig(
-      this.host.getConfiguration("grok").get(LANGUAGE_SETTING, "auto"),
-      detectSystemLocale(this.host.language || "")
-    );
+    const host = this.host;
+    const cfg = host && typeof host.getConfiguration === "function" ? host.getConfiguration("grok") : undefined;
+    const setting = cfg && typeof cfg.get === "function" ? cfg.get(LANGUAGE_SETTING, "auto") : "auto";
+    return localeFromConfig(setting, detectSystemLocale((host && host.language) || ""));
   }
 
   /** Re-render the webview document so a locale change is applied everywhere.
@@ -9566,13 +9560,13 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
   /** Show actionable guidance for setting up the voice API key. */
   private async promptVoiceKeySetup(): Promise<void> {
     const pick = await this.host.showErrorMessage(
-      "Voice control needs an xAI Speech-to-Text key. Sign in with `grok login` and it reuses that token automatically — or set grok.voiceApiKey, or GROK_VOICE_API_KEY / XAI_API_KEY in your workspace .env for a dedicated console.x.ai key.",
-      "Open Settings",
-      "Get a Key",
+      t(this.activeLocale(), "chat.error.voiceKeySetup"),
+      t(this.activeLocale(), "chat.action.openSettings"),
+      t(this.activeLocale(), "chat.action.getAKey"),
     );
-    if (pick === "Open Settings") {
+    if (pick === t(this.activeLocale(), "chat.action.openSettings")) {
       await this.host.openSettings("grok.voiceApiKey");
-    } else if (pick === "Get a Key") {
+    } else if (pick === t(this.activeLocale(), "chat.action.getAKey")) {
       await this.host.openExternal("https://console.x.ai");
     }
   }
@@ -9581,15 +9575,12 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
    *  reach the mic). The webview has already flipped its button to "listening";
    *  on any setup failure we send `voiceError` to reset it. */
   private rejectVoiceStart(clientId?: string): void {
-    const message = clientId
-      ? "Voice control is already active in this browser tab."
-      : "Voice control is already active.";
     if (clientId) {
       this.sendRemoteClient(clientId, { type: "voiceError" });
-      this.sendRemoteClient(clientId, { type: "error", text: message });
+      this.sendRemoteClient(clientId, { type: "error", text: t(this.activeLocale(), "chat.warn.voiceActiveTab") });
     } else {
       this.postLocal({ type: "voiceError" });
-      void this.host.showWarningMessage(message);
+      void this.host.showWarningMessage(t(this.activeLocale(), "chat.warn.voiceActive"));
     }
   }
 
@@ -9627,7 +9618,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
     // Only offered where the package manager installs into a directory already
     // on PATH, so the running editor sees it without a restart. See
     // ffmpegInstallHint.
-    const actions = hint?.offerToRun ? ["Install ffmpeg", "Open Settings"] : ["Open Settings"];
+    const actions = hint?.offerToRun ? [t(this.activeLocale(), "chat.action.installFfmpeg"), t(this.activeLocale(), "chat.action.openSettings")] : [t(this.activeLocale(), "chat.action.openSettings")];
     const pick = await this.host.showErrorMessage(message, ...actions);
 
     if (pick === "Install ffmpeg" && hint) {
@@ -9702,8 +9693,8 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       this.host.appendLine(`[voice] start failed: ${msg}`);
       // ffmpeg-missing is the common, fixable case — offer a jump to its setting.
       if (/ffmpeg/i.test(msg)) {
-        const pick = await this.host.showErrorMessage(msg, "Open Settings");
-        if (pick === "Open Settings") {
+        const pick = await this.host.showErrorMessage(msg, t(this.activeLocale(), "chat.action.openSettings"));
+        if (pick === t(this.activeLocale(), "chat.action.openSettings")) {
           await this.host.openSettings("grok.ffmpegPath");
         }
       } else {
@@ -9780,11 +9771,11 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       this.host.appendLine(`[voice] stream error: ${e.message}`);
       if (!this.voiceFinalizing) {
         if (/\b(401|403)\b|rejected/i.test(e.message)) {
-          void this.host.showErrorMessage(e.message, "Open Settings").then((pick) => {
-            if (pick === "Open Settings") void this.host.openSettings("grok.voiceApiKey");
+          void this.host.showErrorMessage(e.message, t(this.activeLocale(), "chat.action.openSettings")).then((pick) => {
+            if (pick === t(this.activeLocale(), "chat.action.openSettings")) void this.host.openSettings("grok.voiceApiKey");
           });
         } else {
-          this.host.showErrorMessage(`Voice transcription failed: ${e.message}`);
+          this.host.showErrorMessage(t(this.activeLocale(), "chat.error.voiceTranscriptionFailed", { error: e.message }));
         }
         this.postLocal({ type: "voiceError" });
       }
@@ -9813,15 +9804,15 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       const msg = (e as Error).message;
       this.host.appendLine(`[voice] stream start failed: ${msg}`);
       if (/ffmpeg/i.test(msg)) {
-        const pick = await this.host.showErrorMessage(msg, "Open Settings");
-        if (pick === "Open Settings") {
+        const pick = await this.host.showErrorMessage(msg, t(this.activeLocale(), "chat.action.openSettings"));
+        if (pick === t(this.activeLocale(), "chat.action.openSettings")) {
           await this.host.openSettings("grok.ffmpegPath");
         }
       } else if (/\b(401|403)\b|rejected/i.test(msg)) {
         // Auth handshake rejection — msg is already the source-aware guidance
         // (re-login or set a dedicated key); offer the settings shortcut.
-        const pick = await this.host.showErrorMessage(msg, "Open Settings");
-        if (pick === "Open Settings") {
+        const pick = await this.host.showErrorMessage(msg, t(this.activeLocale(), "chat.action.openSettings"));
+        if (pick === t(this.activeLocale(), "chat.action.openSettings")) {
           await this.host.openSettings("grok.voiceApiKey");
         }
       } else {
@@ -9941,7 +9932,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
     } catch (e) {
       if (generation !== this.voiceGeneration) return;
       this.host.appendLine(`[voice] stop failed: ${(e as Error).message}`);
-      this.host.showErrorMessage(`Voice recording failed: ${(e as Error).message}`);
+      this.host.showErrorMessage(t(this.activeLocale(), "chat.error.voiceRecordingFailed", { error: (e as Error).message }));
       this.releaseVoice(this.localVoiceCwd);
       this.localVoiceCwd = undefined;
       this.localVoiceCredentialCwd = undefined;
@@ -9958,7 +9949,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       const sendPhrase = this.voiceSetting(cwd, "voiceSendPhrase", DEFAULT_SEND_PHRASE);
       const { text, send } = parseVoiceCommand(raw, sendPhrase);
       if (!text && !send) {
-        this.host.showInformationMessage("Voice control: nothing was transcribed (silence?).");
+        this.host.showInformationMessage(t(this.activeLocale(), "chat.info.voiceNothingTranscribed"));
         this.postLocal({ type: "voiceError" });
         return;
       }
@@ -9982,7 +9973,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
     entry: RemoteVoiceEntry,
   ): Promise<void> {
     const key = this.resolveVoiceApiKey(entry.credentialCwd);
-    if (!key) throw new Error("Voice control needs an xAI Speech-to-Text key on the host.");
+    if (!key) throw new Error(t(this.activeLocale(), "chat.error.voiceNoKey"));
     const streamer = new PcmVoiceStreamer();
     entry.streamer = streamer;
     const current = () => this.remoteVoice.get(clientId) === entry && entry.streamer === streamer;
@@ -10019,7 +10010,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
     const pending = entry.ingress.ready();
     for (const bytes of pending) {
       if (!streamer.writePcm(bytes)) {
-        this.failRemoteVoice(clientId, "The Speech-to-Text stream did not accept buffered microphone audio.");
+        this.failRemoteVoice(clientId, t(this.activeLocale(), "chat.error.remoteVoiceStreamRejected"));
         return;
       }
     }
@@ -10032,7 +10023,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       this.rememberVoiceConfigured(credentialCwd, false);
       this.sendRemoteClient(clientId, { type: "voiceConfigured", value: false }, credentialCwd);
       this.sendRemoteClient(clientId, { type: "voiceError" });
-      this.sendRemoteClient(clientId, { type: "error", text: "Voice control needs an xAI Speech-to-Text key on the host." });
+      this.sendRemoteClient(clientId, { type: "error", text: t(this.activeLocale(), "chat.error.voiceNoKey") });
       return;
     }
     if (this.remoteVoice.has(clientId)) {
@@ -10170,7 +10161,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
     } else {
       this.sendRemoteClient(clientId, { type: "voiceError" });
     }
-    this.sendRemoteClient(clientId, { type: "error", text: `Voice transcription failed: ${detail}` });
+    this.sendRemoteClient(clientId, { type: "error", text: t(this.activeLocale(), "chat.error.voiceTranscriptionFailed", { error: detail }) });
   }
 
   private async openDiffEditor(
@@ -10514,14 +10505,14 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
     const prepared = prepareFileUpload(suppliedName, data, MAX_VISION_IMAGE_BYTES);
     if (!prepared.ok) {
       const detail = prepared.reason === "unsupported-extension"
-        ? "supported types are .md, .txt, .pdf, .csv, .xlsx, and .docx"
+        ? t(this.activeLocale(), "chat.error.attachDocUnsupported")
         : prepared.reason === "too-large"
-          ? "the file exceeds the 20 MiB attachment limit"
+          ? t(this.activeLocale(), "chat.error.attachDocTooLarge")
           : prepared.reason === "empty"
-            ? "the file is empty"
-            : "the file data is invalid";
+            ? t(this.activeLocale(), "chat.error.attachDocEmpty")
+            : t(this.activeLocale(), "chat.error.attachDocInvalid");
       this.host.appendLine(`[upload] rejected ${suppliedName}: ${detail}`);
-      this.reportRequester(requester, "error", `Could not attach document — ${detail}.`);
+      this.reportRequester(requester, "error", t(this.activeLocale(), "chat.error.attachDocFailed", { detail }));
       return;
     }
 
@@ -10535,7 +10526,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
     } catch (e) {
       void fs.promises.rm(dir, { recursive: true, force: true }).catch(() => {});
       this.host.appendLine(`[upload] staging failed for ${prepared.name}: ${(e as Error).message}`);
-      this.reportRequester(requester, "error", `Could not attach document — ${(e as Error).message}`);
+      this.reportRequester(requester, "error", t(this.activeLocale(), "chat.error.attachDocFailed", { detail: (e as Error).message }));
     }
   }
 
@@ -10626,20 +10617,20 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
   ): Promise<void> {
     try {
       if (!isVisionMime(mimeType)) {
-        this.reportRequester(requester, "error", `Grok: unsupported image type ${mimeType} — use PNG, JPEG, GIF, or WebP.`);
+        this.reportRequester(requester, "error", t(this.activeLocale(), "chat.error.unsupportedImageType", { type: mimeType }));
         return;
       }
       const bytes = Buffer.from(base64, "base64");
       if (bytes.length === 0) return;
       if (bytes.length > MAX_VISION_IMAGE_BYTES) {
-        this.reportRequester(requester, "error", "Grok: pasted image exceeds the 20 MiB vision limit.");
+        this.reportRequester(requester, "error", t(this.activeLocale(), "chat.error.imageTooLarge"));
         return;
       }
       const session = await this.stageImageAttachment(bytes, mimeType, undefined, owner, previewId);
       if (session === this.focused) this.revealAndFocusComposer();
     } catch (e) {
       this.host.appendLine(`[image] paste failed: ${(e as Error).message}`);
-      this.reportRequester(requester, "error", `Grok: could not attach the pasted image — ${(e as Error).message}`);
+      this.reportRequester(requester, "error", t(this.activeLocale(), "chat.error.attachPastedImageFailed", { error: (e as Error).message }));
     }
   }
 
@@ -11052,7 +11043,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       // the login screen, which can't fix a limit — and show a clear limit
       // notice instead (#57).
       if (isRateLimitError(e)) {
-        this.emit(session, { type: "agentError", text: rateLimitNoticeText(e) });
+        this.emit(session, { type: "agentError", text: rateLimitNoticeText(e, this.activeLocale()) });
         this.setStatus(session, "error");
         return;
       }
@@ -11063,7 +11054,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       // Recovery declined (already retried this streak, or not auth-shaped):
       // promptErrorText keeps the copy consistent — the entitlement notice for
       // billing-flavored wording (#58), the raw detail otherwise.
-      this.emit(session, { type: "agentError", text: promptErrorText(e) });
+      this.emit(session, { type: "agentError", text: promptErrorText(e, this.activeLocale()) });
       this.setStatus(session, "error");
     } finally {
       // Belt to the braces above: however this turn left — an early return on a
@@ -11142,7 +11133,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       // The resend ran into a usage limit — that's the real story, not auth
       // (#57): a fresh process with a fresh token hit the same wall.
       if (isRateLimitError(e2)) {
-        this.emit(session, { type: "agentError", text: rateLimitNoticeText(e2) });
+        this.emit(session, { type: "agentError", text: rateLimitNoticeText(e2, this.activeLocale()) });
         this.setStatus(session, "error");
         return true;
       }
@@ -11162,7 +11153,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
         // not a sign-in problem — promptErrorText shows the entitlement notice
         // with the CLI's own actionable advice in chat (#58), never the login
         // overlay, which can't fix it.
-        this.emit(session, { type: "agentError", text: promptErrorText(e2) });
+        this.emit(session, { type: "agentError", text: promptErrorText(e2, this.activeLocale()) });
         this.setStatus(session, "error");
       }
     } finally {
@@ -12814,7 +12805,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       // the scope would start Grok in whatever happens to be selected while the
       // click plainly named another project, and the agent would then write
       // there. Refuse, and refresh so the dead row goes away.
-      void this.host.showWarningMessage(`That project is no longer available:\n${requestedCwd}`);
+      void this.host.showWarningMessage(t(this.activeLocale(), "chat.error.projectUnavailable", { path: requestedCwd }));
       this.postRepoCatalog();
       this.postSessionsList();
       return;
@@ -12982,7 +12973,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       this.refuseRemoteResume(
         clientId,
         id,
-        "Could not restore this conversation because it is already being opened in another tab or the VS Code view.",
+        t(this.activeLocale(), "chat.remote.restoreInAnotherView"),
         selectedCwd,
       );
       return;
@@ -13074,7 +13065,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       this.refuseRemoteResume(
         clientId,
         id,
-        "Could not restore this conversation because it is already open in another tab.",
+        t(this.activeLocale(), "chat.remote.restoreOpenInTab"),
         target.selectedCwd,
       );
       return;
@@ -13084,7 +13075,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       this.refuseRemoteResume(
         clientId,
         id,
-        "Could not restore this tab's conversation because its repository is no longer selected or available.",
+        t(this.activeLocale(), "chat.remote.restoreRepoUnavailable"),
         target.selectedCwd,
       );
       return;
@@ -13100,7 +13091,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       this.refuseRemoteResume(
         clientId,
         id,
-        "Could not restore this tab's previous conversation. It may have been deleted, or its repository may no longer be available. Start a new session explicitly to continue.",
+        t(this.activeLocale(), "chat.remote.restoreDeleted"),
         target.selectedCwd,
       );
       return;
@@ -13155,7 +13146,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
     if (!claim) {
       this.host.appendLine(`[sessions] refused local resume (session load is reserved by another view)`);
       void this.host.showInformationMessage(
-        "This conversation is already being opened in another tab or view.",
+        t(this.activeLocale(), "chat.info.alreadyOpening"),
       );
       return;
     }
@@ -13555,7 +13546,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
     this.oauthShadowWarningShown = true;
     void this.state.update(OAUTH_SHADOW_WARNING_KEY, true);
     void this.host.showWarningMessage(
-      "Grok is using its cached OAuth session, so XAI_API_KEY is currently ignored. To use the API key, run `grok logout`, then start a new session.",
+      t(this.activeLocale(), "chat.warn.oauthShadow"),
     );
   }
 
@@ -13957,9 +13948,9 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       await this.context.secrets.delete(GrokSidebar.DEVICE_TOKEN_SECRET);
     } catch (e) {
       this.host.appendLine(`[remote] failed to clear revoked device token: ${(e as Error)?.message ?? e}`);
-      const retry = "Retry unlink";
+      const retry = t(this.activeLocale(), "chat.remote.retryUnlink");
       void this.host.showErrorMessage(
-        "AFK Pilot access was revoked, but the stored device token could not be cleared.",
+        t(this.activeLocale(), "chat.error.revokedTokenClearFailed"),
         retry,
       ).then((choice) => {
         if (choice === retry) void this.host.unlinkRemote();
@@ -13967,9 +13958,9 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       return;
     }
 
-    const relink = "Link this device again";
+    const relink = t(this.activeLocale(), "chat.remote.linkAgain");
     void this.host.showWarningMessage(
-      "AFK Pilot access for this device was revoked, so it has been unlinked. Link it again to continue remotely.",
+      t(this.activeLocale(), "chat.info.revokedUnlinked"),
       relink,
     ).then((choice) => {
       if (choice === relink) void this.host.linkRemote();
@@ -14041,7 +14032,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       const { code } = (await startRes.json()) as { code: string };
       void this.host.openExternal(`${base}/link?code=${encodeURIComponent(code)}`);
       const token = await this.host.withProgress(
-        { title: `Approve this device in the browser (code ${code})…`, cancellable: true },
+        { title: t(this.activeLocale(), "chat.gear.approveDeviceTitle", { code }), cancellable: true },
         (cancel) => this.pollLinkApproval(base, code, cancel),
       );
       if (!token) return; // cancelled / expired — poll loop already surfaced why
@@ -14050,9 +14041,9 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       this.uplink = undefined;
       await this.maybeStartUplink();
       this.post({ type: "remoteStatus", linked: true });
-      void this.host.showInformationMessage("Remote device linked — this workspace is now reachable from the web client.");
+      void this.host.showInformationMessage(t(this.activeLocale(), "chat.info.remoteLinked"));
     } catch (e) {
-      void this.host.showErrorMessage(`Remote link failed: ${(e as Error)?.message ?? String(e)}`);
+      void this.host.showErrorMessage(t(this.activeLocale(), "chat.error.remoteLinkFailed", { detail: (e as Error)?.message ?? String(e) }));
     }
   }
 
@@ -14069,7 +14060,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       const body = (await res.json()) as { status: string; token?: string };
       if (body.status === "approved" && body.token) return body.token;
       if (body.status === "expired" || body.status === "unknown") {
-        void this.host.showErrorMessage("Remote link code expired — run the link command again.");
+        void this.host.showErrorMessage(t(this.activeLocale(), "chat.error.remoteLinkExpired"));
         return undefined;
       }
     }
@@ -14107,7 +14098,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
     }
     this.clearRemoteRuntime();
     this.post({ type: "remoteStatus", linked: false });
-    void this.host.showInformationMessage("Remote device unlinked.");
+    void this.host.showInformationMessage(t(this.activeLocale(), "chat.info.remoteUnlinked"));
   }
 
   /** Tell the webview whether this machine holds a relay device token (drives
@@ -14257,7 +14248,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
     }
     const panel = this.host.openEditorWebview({
       viewType: "grok.settings",
-      title: "Grok Settings",
+      title: t(this.activeLocale(), "chat.gear.settingsTitle"),
       localResourceRoots: [
         Uri.joinPath(this.context.extensionUri, "media"),
         Uri.joinPath(this.context.extensionUri, "resources"),

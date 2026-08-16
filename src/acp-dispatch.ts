@@ -7,6 +7,7 @@
  */
 
 import { fileUriToPath } from "./file-ref";
+import { t, type Locale } from "./i18n";
 
 export type DispatchEvent =
   | { kind: "response"; id: number | string; result?: any; error?: any }
@@ -774,12 +775,12 @@ export function isRateLimitError(err: unknown): boolean {
  * is shown because none exists on the wire — the quota window is
  * backend-config-driven and the CLI deliberately promises no duration.
  */
-export function rateLimitNoticeText(err: unknown): string {
+export function rateLimitNoticeText(err: unknown, locale: Locale = "en"): string {
   const raw = errorDetail(err)
     .replace(/^subscription:free-usage-exhausted:?\s*/i, "")
     .trim();
-  const body = raw && !/^rate ?limited\.?$/i.test(raw) ? raw : GENERIC_RATE_LIMIT_TEXT;
-  return `Usage limit reached \u{2014} not a sign-in issue. ${body}`;
+  const body = raw && !/^rate ?limited\.?$/i.test(raw) ? raw : t(locale, "chat.rateLimit.generic");
+  return `${t(locale, "chat.rateLimit.usageLimit")} ${body}`;
 }
 
 /**
@@ -792,12 +793,12 @@ export function rateLimitNoticeText(err: unknown): string {
  * advice — including its "API key shadowed by cached OAuth session → run
  * `grok logout`" hint — so it's shown verbatim.
  */
-export function entitlementNoticeText(err: unknown): string {
+export function entitlementNoticeText(err: unknown, locale: Locale = "en"): string {
   const detail = errorDetail(err).trim();
   const noAccess = /\bsubscription\b|\bentitl/i.test(detail)
-    ? "This account doesn't have Grok Build access (it needs SuperGrok or X Premium+ — or sign out to use an XAI_API_KEY instead). "
+    ? t(locale, "chat.rateLimit.noGrokBuildAccess")
     : "";
-  return `Not a sign-in issue \u{2014} signing in again won't fix this. ${noAccess}${detail}`;
+  return `${t(locale, "chat.rateLimit.notSignIn")} ${noAccess}${detail}`;
 }
 
 /**
@@ -806,10 +807,10 @@ export function entitlementNoticeText(err: unknown): string {
  * wording that is not a credential failure (#58), else the error's own
  * message.
  */
-export function promptErrorText(err: unknown): string {
-  if (isRateLimitError(err)) return rateLimitNoticeText(err);
+export function promptErrorText(err: unknown, locale: Locale = "en"): string {
+  if (isRateLimitError(err)) return rateLimitNoticeText(err, locale);
   const detail = errorDetail(err);
-  if (!isCredentialError(err) && isAuthErrorText(detail)) return entitlementNoticeText(err);
+  if (!isCredentialError(err) && isAuthErrorText(detail)) return entitlementNoticeText(err, locale);
   return detail;
 }
 

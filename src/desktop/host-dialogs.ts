@@ -6,6 +6,18 @@
  * (often 10–20 items) impossible. These dialogs scale to arbitrary lists.
  */
 import { escapeHtml } from "./document-view";
+import { t, localeFromConfig, detectSystemLocale, type Locale } from "../i18n";
+import { app } from "electron";
+
+// Best-effort locale for desktop-only dialog chrome (the Cancel button). The
+// full language setting is resolved in main.ts; here we fall back to the OS
+// locale so a Chinese system still sees a Chinese Cancel without a config read.
+const HOST_DIALOG_LOCALE: Locale = localeFromConfig(
+  "auto",
+  detectSystemLocale(app && typeof app.getLocale === "function" ? app.getLocale() : ""),
+);
+const CANCEL_LABEL = t(HOST_DIALOG_LOCALE, "common.cancel");
+const CANCEL_LABEL_HTML = escapeHtml(CANCEL_LABEL);
 
 export interface DialogQuickPickItem {
   label: string;
@@ -148,7 +160,7 @@ export function buildQuickPickHtml(options: BuildQuickPickHtmlOptions): string {
   const body = `<div class="wrap">
   <div class="hdr"><h1>${escapeHtml(title)}</h1><p>${escapeHtml(placeHolder)}</p></div>
   <div class="list" role="listbox">${rows}</div>
-  <div class="foot"><button type="button" class="btn secondary" id="cancel">Cancel</button></div>
+  <div class="foot"><button type="button" class="btn secondary" id="cancel">${CANCEL_LABEL_HTML}</button></div>
 </div>`;
 
   const boot = `
@@ -187,7 +199,7 @@ export function buildInputBoxHtml(options: BuildInputBoxHtmlOptions = {}): strin
   </div>
   <input id="val" type="${inputType}" placeholder="${escapeHtml(placeHolder)}" value="${escapeHtml(value)}" />
   <div class="foot" style="margin-top:auto">
-    <button type="button" class="btn secondary" id="cancel">Cancel</button>
+    <button type="button" class="btn secondary" id="cancel">${CANCEL_LABEL_HTML}</button>
     <button type="button" class="btn primary" id="ok">OK</button>
   </div>
 </div>`;
@@ -239,7 +251,7 @@ export function parseDialogSubmit(raw: unknown):
 // (Esc "chooses" the only action).
 
 /** Label VS Code adds implicitly on modal confirmations. */
-export const MESSAGE_BOX_CANCEL_LABEL = "Cancel";
+export const MESSAGE_BOX_CANCEL_LABEL = CANCEL_LABEL;
 
 export interface MessageBoxButtonPlan {
   /** Buttons passed to Electron `dialog.showMessageBox`. */

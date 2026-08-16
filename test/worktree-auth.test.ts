@@ -139,7 +139,7 @@ describe("sidebar create path validates before cache (source)", () => {
     // git spawn lives outside sidebar (cli-process gate: no execFile in sidebar).
     expect(src).toMatch(/from\s+["']\.\/git-worktree-list["']/);
 
-    const createStart = src.indexOf("Creating git worktree");
+    const createStart = src.indexOf("const creator = await this.clientForWorktreeCreate(sourcePath);");
     // From create progress through the cache push it guards. Bounded by the
     // push itself, not by a character count — a fixed window silently stops
     // covering the code it is about the moment a comment grows.
@@ -338,7 +338,7 @@ describe("worktree validation reads git first", () => {
     expect(body).toContain("return `it is outside");
     const remove = src.slice(src.indexOf("async removeFocusedWorktree"));
     expect(remove.slice(0, remove.indexOf("this.worktreeCache = "))).toContain(
-      "was left alone because",
+      "chat.error.removeWorktreeFailedDetail",
     );
   });
 
@@ -366,7 +366,7 @@ describe("worktree validation reads git first", () => {
     // always matched. A response naming repository B could hand back a genuine
     // worktree OF B, have git truthfully list it, and be filed under A.
     const src = fs.readFileSync(path.join(root, "src", "sidebar.ts"), "utf8");
-    const start = src.indexOf("Creating git worktree");
+    const start = src.indexOf("const creator = await this.clientForWorktreeCreate(sourcePath);");
     const region = src.slice(start, src.indexOf("this.worktreeCache.push", start));
     expect(region).toContain("const sourceGitRoot = gitRootForPath(sourcePath, defaultFs) || sourcePath;");
     expect(region, "the response must not choose the root").not.toMatch(
@@ -386,7 +386,7 @@ describe("worktree validation reads git first", () => {
     const src = fs.readFileSync(path.join(root, "src", "sidebar.ts"), "utf8");
     const start = src.indexOf("const creator = await this.clientForWorktreeCreate(sourcePath);");
     expect(start).toBeGreaterThan(-1);
-    const region = src.slice(start, src.indexOf("Create worktree failed", start));
+    const region = src.slice(start, src.indexOf("chat.error.createWorktreeFailed", start));
     const lastValidate = region.lastIndexOf("listAuthoritativeWorktreePaths");
     const release = region.indexOf("await releaseCreator();");
     const sessionStart = region.indexOf("await this.startSession(undefined, wtSession);");
@@ -458,10 +458,10 @@ describe("worktree validation reads git first", () => {
     // reported progress and then stopped is an unfinished copy and must be
     // refused; one that never spoke predates the event and falls through to
     // the disk checks, exactly as every release before this did.
-    const create = src.slice(src.indexOf("Creating git worktree"));
+    const create = src.slice(src.indexOf("const creator = await this.clientForWorktreeCreate(sourcePath);"));
     const region = create.slice(0, create.indexOf("this.worktreeCache.push"));
     expect(region).toContain('if (outcome === "stalled")');
-    expect(region).toContain("never finished being created");
+    expect(region).toContain("chat.error.worktreeNeverFinished");
     expect(region).toContain('if (outcome === "silent")');
     expect(region).not.toMatch(/if \(outcome === "silent"\)[\s\S]{0,200}showErrorMessage/);
   });
@@ -513,7 +513,7 @@ describe("worktree validation reads git first", () => {
     const start = src.indexOf("async newWorktreeSession");
     const body = src.slice(start, src.indexOf("private worktreeCreateInFlight", start));
     expect(body).toContain("if (this.worktreeCreateInFlight) {");
-    expect(body).toContain("already being created");
+    expect(body).toContain("chat.warn.worktreeInFlight");
     // Released on every exit, or the feature dies after its first failure.
     expect(body).toMatch(/finally \{\s*this\.worktreeCreateInFlight = false;/);
   });
@@ -539,8 +539,8 @@ describe("worktree validation reads git first", () => {
     // source root onto some other conversation — and a cold restore later
     // treats that saved binding as authoritative.
     const src = fs.readFileSync(path.join(root, "src", "sidebar.ts"), "utf8");
-    const create = src.slice(src.indexOf("Creating git worktree"));
-    const region = create.slice(0, create.indexOf("Worktree session ready"));
+    const create = src.slice(src.indexOf("const creator = await this.clientForWorktreeCreate(sourcePath);"));
+    const region = create.slice(0, create.indexOf("chat.info.worktreeSessionReady"));
     expect(region).toContain("await this.startSession(undefined, wtSession);");
     expect(region).toContain("const id = wtSession.activeSessionId;");
     expect(region, "the identifier must not be re-read from focus after the await").not.toMatch(

@@ -213,7 +213,7 @@ describe("removing a project ends what is running in it", () => {
     // confirmation said "Nothing on disk is touched".
     const body = methodBody("private async forgetExtraProjectFolder(");
     expect(body).toMatch(/sessionsBoundToFolder\(cwd\)\.filter\(sessionHasWorkInFlight\)/);
-    expect(body).toMatch(/"Hide anyway"/);
+    expect(body).toMatch(/chat\.confirm\.hideAnyway/);
     expect(body).toMatch(/this\.revokeClosedProjectFolder\(cwd\)/);
     // Revoke AFTER the tombstone is written, so the folder has already left the
     // authorized set and a concurrent remote send cannot route into a doomed
