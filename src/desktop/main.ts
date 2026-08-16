@@ -30,7 +30,7 @@ import { GrokSidebar } from "../sidebar";
 import { Uri } from "../host";
 import type { HostContext, HostDisposable } from "../host";
 import { ConfigStore, SensitiveConfigStore } from "./config-store";
-import { localeFromConfig, LANGUAGE_SETTING, type Locale } from "../i18n";
+import { localeFromConfig, detectSystemLocale, LANGUAGE_SETTING, type Locale } from "../i18n";
 import { createAppResourceHandler } from "./app-resource-handler";
 import type { DesktopOpenFileContext } from "./desktop-policy";
 import { createElectronHost, ensureWorkspaceRoot, type ElectronRemoteActions } from "./electron-host";
@@ -488,7 +488,8 @@ async function createApp(): Promise<void> {
       buildDesktopAppMenu(desktopMenuActions, {
         isPackaged,
         locale: localeFromConfig(
-          config.getConfiguration("grok").get("language", "en"),
+          config.getConfiguration("grok").get("language", "auto"),
+          detectSystemLocale(app.getLocale?.() ?? ""),
         ),
       }),
     );

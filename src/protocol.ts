@@ -554,7 +554,7 @@ export type WebviewMsg =
   /** Persist `grok.telemetry.enabled`. Desktop toggle; remotes do not send this. */
   | { type: "setTelemetryEnabled"; value: boolean }
   /** Persist `grok.language` and switch the UI locale live. */
-  | { type: "setLanguage"; locale: "en" | "zh-CN" }
+  | { type: "setLanguage"; locale: "en" | "zh-CN" | "auto" }
   /**
    * Attach a user-selected file. VS Code posts a `path` (file URI or absolute)
    * from the webview drag-drop surface. Desktop posts only a host-minted

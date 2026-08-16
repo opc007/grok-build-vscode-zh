@@ -169,11 +169,11 @@
       description: t("settings.language.description"),
       kind: "select",
       options: (window.__I18N && window.__I18N.locales
-        ? window.__I18N.locales
-        : [{ id: "en", label: "English" }, { id: "zh-CN", label: "简体中文" }]
+        ? window.__I18N.locales.concat([{ id: "auto", label: t("settings.language.auto") }])
+        : [{ id: "en", label: "English" }, { id: "zh-CN", label: "简体中文" }, { id: "auto", label: t("settings.language.auto") }]
       ).map(function (l) { return { value: l.id, label: l.label }; }),
-      defaultValue: "en",
-      get: (s) => (s && s.language) || "en",
+      defaultValue: "auto",
+      get: (s) => (s && s.language) || "auto",
       message: (value) => ({ type: "setLanguage", locale: value }),
     },
     {

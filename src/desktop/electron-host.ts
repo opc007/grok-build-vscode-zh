@@ -1220,7 +1220,11 @@ export function createElectronHost(opts: ElectronHostOptions): Host {
       return DESKTOP_APP_SHORT_NAME;
     },
     get language() {
-      return "en";
+      try {
+        return app.getLocale();
+      } catch {
+        return "en";
+      }
     },
     get isTelemetryEnabled() {
       return config.getValue("grok.telemetry.enabled") !== false;

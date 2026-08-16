@@ -34,6 +34,7 @@
 
     "settings.language.title": "Language",
     "settings.language.description": "Interface language for this app. Grok still understands prompts in any language.",
+    "settings.language.auto": "Auto (follow system)",
     "settings.appPurpose.title": "Use this app for",
     "settings.appPurpose.description": "Knowledge work hides worktrees, thinking traces, and tool details. Coding unlocks those controls, still off by default.",
     "settings.appPurpose.knowledge": "Knowledge work",

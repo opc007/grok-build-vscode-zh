@@ -338,7 +338,7 @@ export function parseWebviewMsg(raw: unknown): WebviewMsg | null {
       if (!opt(raw.withHint, isBoolean)) return null;
       break;
     case "setLanguage":
-      if (raw.locale !== "en" && raw.locale !== "zh-CN") return null;
+      if (raw.locale !== "en" && raw.locale !== "zh-CN" && raw.locale !== "auto") return null;
       break;
     default:
       return null;

@@ -1866,6 +1866,15 @@ describe("desktop application menu language switcher", () => {
     submenu.find((i) => i.label === "English")!.click!();
     expect(seen).toEqual(["zh-CN", "en"]);
   });
+
+  it("accepts setLanguage with 'auto' (follow system) through the message validator", () => {
+    expect(parseWebviewMsg({ type: "setLanguage", locale: "auto" })).toEqual({
+      type: "setLanguage",
+      locale: "auto",
+    });
+    // A garbage locale is still rejected.
+    expect(parseWebviewMsg({ type: "setLanguage", locale: "fr" })).toBeNull();
+  });
 });
 
 describe("desktop branding and menu", () => {

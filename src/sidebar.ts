@@ -10,10 +10,10 @@ import type {
 } from "./host";
 import { Uri, disposeAll, formatRemoteInstallId, shouldRehydrateOnWebviewReady } from "./host";
 import {
-  DEFAULT_LOCALE,
   LANGUAGE_SETTING,
   SUPPORTED_LOCALES,
   dictionaryFor,
+  detectSystemLocale,
   localeFromConfig,
   t,
   type Locale,
@@ -7236,10 +7236,12 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
         break;
       }
       case "setLanguage": {
-        const next = localeFromConfig(msg.locale);
+        // Persist the exact choice (en | zh-CN | auto). The effective locale is
+        // resolved at render time (localeFromConfig + system locale), so storing
+        // "auto" keeps "follow the system language" working after a restart.
         await this.host
           .getConfiguration("grok")
-          .update(LANGUAGE_SETTING, next, "global");
+          .update(LANGUAGE_SETTING, msg.locale, "global");
         // The config watcher reloads the webview so the new locale applies
         // everywhere (static chrome + Settings). Chat rehydrates from the host.
         break;
@@ -9394,10 +9396,12 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
     this.post({ type: "showThinking", value: this.showThinking() });
   }
 
-  /** Active UI locale, read from the `grok.language` setting (defaults to English). */
+  /** Active UI locale. `grok.language` defaults to "auto", which resolves to the
+   *  OS / VS Code UI language so a Chinese system opens in 简体中文 out of the box. */
   private activeLocale(): Locale {
     return localeFromConfig(
-      this.host.getConfiguration("grok").get(LANGUAGE_SETTING, DEFAULT_LOCALE)
+      this.host.getConfiguration("grok").get(LANGUAGE_SETTING, "auto"),
+      detectSystemLocale(this.host.language || "")
     );
   }
 
@@ -11233,7 +11237,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
     // Additive: older webviews ignore an unknown field; older hosts omit it
     // and command View all then leaves language unset.
     const commandLanguage = commandLanguageForDialect(resolvedTerminalShellDialect());
-    const language = localeFromConfig(cfg.get(LANGUAGE_SETTING, DEFAULT_LOCALE));
+    const language = localeFromConfig(cfg.get(LANGUAGE_SETTING, "auto"), detectSystemLocale(this.host.language || ""));
     return {
       type: "initialState",
       effort: cfg.get("defaultEffort", ""),

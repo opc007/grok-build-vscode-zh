@@ -51,6 +51,7 @@ export const en: Record<string, string> = {
   // ----- settings rows -----
   "settings.language.title": "Language",
   "settings.language.description": "Interface language for this app. Grok still understands prompts in any language.",
+  "settings.language.auto": "Auto (follow system)",
   "settings.appPurpose.title": "Use this app for",
   "settings.appPurpose.description": "Knowledge work hides worktrees, thinking traces, and tool details. Coding unlocks those controls, still off by default.",
   "settings.appPurpose.knowledge": "Knowledge work",
@@ -290,6 +291,7 @@ export const zhCN: Record<string, string> = {
 
   "settings.language.title": "语言",
   "settings.language.description": "本应用的界面语言。Grok 仍然能理解任何语言的输入。",
+  "settings.language.auto": "跟随系统",
   "settings.appPurpose.title": "将此应用用于",
   "settings.appPurpose.description": "知识工作会隐藏工作树、思考过程和工具细节。编码模式会解锁这些控件，默认仍关闭。",
   "settings.appPurpose.knowledge": "知识工作",
@@ -516,7 +518,17 @@ export function t(
   return fill(table[key] ?? en[key] ?? key, vars);
 }
 
-/** Normalize an arbitrary config value into a supported Locale. */
-export function localeFromConfig(raw: unknown): Locale {
-  return raw === "zh-CN" ? "zh-CN" : "en";
+/** Normalize an arbitrary config value into a supported Locale.
+ *  `"auto"` (or any unrecognized value) resolves to `systemLocale`, which the
+ *  caller derives from the OS / VS Code UI language — so a fresh install on a
+ *  Chinese system opens in 简体中文 without the user changing anything. */
+export function localeFromConfig(raw: unknown, systemLocale: Locale = "en"): Locale {
+  if (raw === "zh-CN") return "zh-CN";
+  if (raw === "en") return "en";
+  return systemLocale;
+}
+
+/** Map an OS / VS Code UI language tag to a supported UI Locale. */
+export function detectSystemLocale(systemLanguage: string): Locale {
+  return /^zh/i.test(systemLanguage || "") ? "zh-CN" : "en";
 }
