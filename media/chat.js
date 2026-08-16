@@ -6756,7 +6756,7 @@
           `<p class="onb-heading">${window.t("chat.onb.installGrokCliHeading")}</p>` +
           `<div class="onb-cmd">` +
             `<code>${installCmd}</code>` +
-            `<button class="onb-copy" type="button" title="Copy" data-cmd="${installCmd}">${ICON.copy}</button>` +
+            `<button class="onb-copy" type="button" title="${window.t("chat.action.copy")}" data-cmd="${installCmd}">${ICON.copy}</button>` +
           `</div>` +
           `<button class="onb-action" type="button" data-act="runInstall">Open terminal &amp; run</button>` +
           `<button class="onb-action onb-secondary" type="button" data-act="recheckProvider" data-provider="${info.provider || "grok"}">Re-check connection</button>` +
@@ -6790,7 +6790,7 @@
                 `<button class="onb-action onb-secondary" type="button" data-act="cancelCodexInstall">Cancel</button></div>`
             : `<button class="onb-action" type="button" data-act="installCodex">Install Codex</button>`) +
           `<p class="onb-desc onb-manual-label">Or install it yourself, or install the OpenAI ChatGPT extension for VS Code:</p>` +
-          `<div class="onb-cmd"><code>${installCmd}</code><button class="onb-copy" type="button" title="Copy" data-cmd="${installCmd}">${ICON.copy}</button></div>` +
+          `<div class="onb-cmd"><code>${installCmd}</code><button class="onb-copy" type="button" title="${window.t("chat.action.copy")}" data-cmd="${installCmd}">${ICON.copy}</button></div>` +
           `<button class="onb-action onb-secondary" type="button" data-act="recheckProvider" data-provider="codex">Re-check</button>` +
         `</div>`;
     } else if (mode === "codex-login") {
@@ -6813,7 +6813,7 @@
           `<p class="onb-desc">${window.t("chat.onb.authRequiredApiDesc")}</p>` +
           `<div class="onb-cmd">` +
             `<code>XAI_API_KEY=your-key-here</code>` +
-            `<button class="onb-copy" type="button" title="Copy" data-cmd="XAI_API_KEY=">${ICON.copy}</button>` +
+            `<button class="onb-copy" type="button" title="${window.t("chat.action.copy")}" data-cmd="XAI_API_KEY=">${ICON.copy}</button>` +
           `</div>` +
           `<p class="onb-desc">${window.t("chat.onb.authRequiredKeyNote")}</p>` +
           `<button class="onb-action onb-secondary" type="button" data-act="recheckProvider" data-provider="grok">Re-check connection</button>` +
@@ -6931,7 +6931,7 @@
       const copyBtn = document.createElement("button");
       copyBtn.className = "msg-action-btn msg-copy-btn";
       copyBtn.type = "button";
-      copyBtn.title = "Copy message";
+      copyBtn.title = window.t("chat.msg.copy");
       copyBtn.innerHTML = `<span class="msg-action-glyph">${ICON.copy}</span>`;
       actions.appendChild(copyBtn);
       // Rewind sits next to Copy on user bubbles only (P2-9). Latest message
@@ -6941,8 +6941,8 @@
         const rewindBtn = document.createElement("button");
         rewindBtn.className = "msg-action-btn msg-rewind-btn";
         rewindBtn.type = "button";
-        rewindBtn.title = "Rewind to this message";
-        rewindBtn.setAttribute("aria-label", "Rewind to this message");
+        rewindBtn.title = window.t("chat.msg.rewind");
+        rewindBtn.setAttribute("aria-label", window.t("chat.msg.rewind"));
         rewindBtn.innerHTML = `<span class="msg-action-glyph">${ICON.undo}</span>`;
         actions.appendChild(rewindBtn);
         // Edit lives only on the LATEST user message (#56) — the one Rewind
@@ -6951,8 +6951,8 @@
         const editBtn = document.createElement("button");
         editBtn.className = "msg-action-btn msg-edit-btn";
         editBtn.type = "button";
-        editBtn.title = "Edit and send again";
-        editBtn.setAttribute("aria-label", "Edit and send again");
+        editBtn.title = window.t("chat.msg.edit");
+        editBtn.setAttribute("aria-label", window.t("chat.msg.edit"));
         editBtn.innerHTML = `<span class="msg-action-glyph">${ICON.pencil}</span>`;
         actions.appendChild(editBtn);
       }
@@ -13460,13 +13460,13 @@
     const items = [];
     if (selected) {
       items.push({
-        label: "Copy",
+        label: window.t("chat.action.copy"),
         icon: ICON.copy,
         onSelect: () => writeClipboardText(selected),
       });
     }
     items.push({
-      label: "Copy Link",
+      label: window.t("chat.ctx.copyLink"),
       icon: ICON.copy,
       onSelect: () => writeClipboardText(href),
     });
