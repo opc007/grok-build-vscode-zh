@@ -1005,7 +1005,7 @@
   updateSendButton(); // spinner by default — session is starting up (busy+locked)
   gearBtn.innerHTML = ICON.gear;
   addBtn.innerHTML = ICON.plus;
-  scrollBottomBtn.innerHTML = `${ICON.arrowDown}<span class="scroll-bottom-label">Scroll to bottom</span>`;
+  scrollBottomBtn.innerHTML = `${ICON.arrowDown}<span class="scroll-bottom-label">${window.t("chat.composer.scrollToBottom")}</span>`;
   updateModeBtn("agent");
 
   // ---------- markdown ----------
@@ -5571,7 +5571,7 @@
     menuSlot.innerHTML = "";
     if (!state.activeSessionId) return;
     menuSlot.appendChild(railMenuButton(
-      "Session actions",
+      window.t("chat.rail.sessionActions"),
       [
         {
           label: window.t("chat.continue.section"),
@@ -5637,7 +5637,7 @@
     // one being opened. railSessionMenuItems disables the id-less actions for
     // that window rather than this call site withholding them.
     menuSlot.appendChild(railMenuButton(
-      "Session actions",
+      window.t("chat.rail.sessionActions"),
       () => {
         if (record) {
           return railSessionMenuItems(record, repo, true, {
@@ -6238,7 +6238,7 @@
       }
       const menuKey = "session:" + (s.id || cwdKey(s.cwd || repo.cwd));
       const menuBtn = railMenuButton(
-        "Session actions",
+        window.t("chat.rail.sessionActions"),
         // `active` (the painted target) decides WHICH row owns the id-less
         // actions; railSessionMenuItems disables them while the host has not
         // confirmed it is on that conversation yet.
@@ -10909,8 +10909,8 @@
     } else {
       micBtn.innerHTML = ICON.mic;
       micBtn.title = state.voiceConfigured
-        ? "Voice control"
-        : "Voice control — click to set up (needs an xAI API key)";
+        ? window.t("chat.voice.control")
+        : window.t("chat.voice.controlSetup");
       micBtn.disabled = false;
     }
     // "needs setup" dot only when idle and no key is configured.

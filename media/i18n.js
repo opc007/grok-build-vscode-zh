@@ -536,6 +536,8 @@
     "chat.error.voiceNoKeyDetail": "Voice control needs an xAI Speech-to-Text key. Sign in with `grok login` and it reuses that token automatically — or set grok.voiceApiKey, or GROK_VOICE_API_KEY / XAI_API_KEY in your workspace .env for a dedicated console.x.ai key.",
     "chat.voice.alreadyActiveTab": "Voice control is already active in this browser tab.",
     "chat.voice.alreadyActive": "Voice control is already active.",
+    "chat.voice.control": "Voice control",
+    "chat.voice.controlSetup": "Voice control — click to set up (needs an xAI API key)",
     "chat.error.attachDocFailed": "Could not attach document — {detail}.",
     "chat.error.unsupportedImageType": "Grok: unsupported image type {type} — use PNG, JPEG, GIF, or WebP.",
     "chat.error.imageTooLarge": "Grok: pasted image exceeds the 20 MiB vision limit.",
