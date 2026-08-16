@@ -1443,7 +1443,7 @@
       if (lang === "mermaid") {
         codeBlocks.push(
           `<div class="code-block mermaid-block">` +
-            `<button class="code-copy-btn" type="button" title="Copy code" aria-label="Copy code">` +
+            `<button class="code-copy-btn" type="button" title="${window.t("chat.code.copy")}" aria-label="${window.t("chat.code.copy")}">` +
               `<span class="code-copy-glyph">${ICON.copy}</span>` +
             `</button>` +
             `<pre class="mermaid-src"><code>${escapeHtml(code).trimEnd()}</code></pre>` +
@@ -1469,7 +1469,7 @@
         : `<code>${escapeHtml(code).trimEnd()}</code>`;
       codeBlocks.push(
         `<div class="code-block${isDiff ? " diff" : ""}">` +
-          `<button class="code-copy-btn" type="button" title="Copy code" aria-label="Copy code">` +
+          `<button class="code-copy-btn" type="button" title="${window.t("chat.code.copy")}" aria-label="${window.t("chat.code.copy")}">` +
             `<span class="code-copy-glyph">${ICON.copy}</span>` +
           `</button>` +
           `<pre>${inner}</pre>` +
@@ -7163,13 +7163,13 @@
     }
     n.edit = editFiles.size;
     const parts = [];
-    if (n.explore) parts.push(`explored ${n.explore} item${n.explore === 1 ? "" : "s"}`);
-    if (n.edit) parts.push(`edited ${n.edit} file${n.edit === 1 ? "" : "s"}`);
-    if (n.delete) parts.push(`deleted ${n.delete} file${n.delete === 1 ? "" : "s"}`);
-    if (n.generate) parts.push(`generated ${n.generate} item${n.generate === 1 ? "" : "s"}`);
-    if (n.web) parts.push("searched web");
-    if (n.command) parts.push(`ran ${n.command} command${n.command === 1 ? "" : "s"}`);
-    return parts.length ? parts.join(", ").replace(/^./, (c) => c.toUpperCase()) : "Tool calls";
+    if (n.explore) parts.push(window.t("tool.summary.explore", { count: n.explore, s: n.explore === 1 ? "" : "s" }));
+    if (n.edit) parts.push(window.t("tool.summary.edit", { count: n.edit, s: n.edit === 1 ? "" : "s" }));
+    if (n.delete) parts.push(window.t("tool.summary.delete", { count: n.delete, s: n.delete === 1 ? "" : "s" }));
+    if (n.generate) parts.push(window.t("tool.summary.generate", { count: n.generate, s: n.generate === 1 ? "" : "s" }));
+    if (n.web) parts.push(window.t("tool.summary.web"));
+    if (n.command) parts.push(window.t("tool.summary.command", { count: n.command, s: n.command === 1 ? "" : "s" }));
+    return parts.length ? parts.join(", ").replace(/^./, (c) => c.toUpperCase()) : window.t("tool.summary.fallback");
   }
 
   function inProgressLabel(call) {
@@ -7177,26 +7177,37 @@
     const kind = toolKind(call);
     const filePath = toolFilePath(call);
     if (/^(list_dir|list_directory)$/.test(name)) {
-      return filePath ? `Listing ${prettyDir(filePath)}` : "Listing files";
+      return filePath ? window.t("tool.status.listingPath", { path: prettyDir(filePath) }) : window.t("tool.status.listing");
     }
     if (/^(read_file|file_read)$/.test(name) || kind === "read") {
-      return filePath ? `Reading ${prettyPath(filePath)}` : "Reading file";
+      return filePath ? window.t("tool.status.readingPath", { path: prettyPath(filePath) }) : window.t("tool.status.reading");
     }
-    if (/^(web_search|search_web)$/.test(name)) return "Searching web";
-    if (/^(web_fetch|webfetch)$/.test(name)) return "Fetching page";
-    if (/^(grep|ripgrep|search_files)$/.test(name) || kind === "search") return "Searching";
+    if (/^(web_search|search_web)$/.test(name)) return window.t("tool.status.searchingWeb");
+    if (/^(web_fetch|webfetch)$/.test(name)) return window.t("tool.status.fetching");
+    if (/^(grep|ripgrep|search_files)$/.test(name) || kind === "search") return window.t("tool.status.searching");
     if (/^(write_file|file_write|write|edit_file|search_replace|str_replace)$/.test(name) || kind === "edit" || kind === "write") {
-      return filePath ? `Editing ${prettyPath(filePath)}` : "Editing file";
+      return filePath ? window.t("tool.status.editingPath", { path: prettyPath(filePath) }) : window.t("tool.status.editing");
     }
-    if (kind === "delete") return filePath ? `Deleting ${prettyPath(filePath)}` : "Deleting file";
-    if (kind === "fetch") return "Generating";
+    if (kind === "delete") return filePath ? window.t("tool.status.deletingPath", { path: prettyPath(filePath) }) : window.t("tool.status.deleting");
+    if (kind === "fetch") return window.t("tool.status.generating");
     if (/^(bash|execute|run_command|run_terminal_command|shell|run_bash)$/.test(name) || kind === "execute") {
-      return "Running command";
+      return window.t("tool.status.runningCmd");
     }
     // A tool we didn't predict still shows — but never echo a long title verbatim.
-    return name && name.length < 30 ? `Running ${name}` : "Running tool";
+    return name && name.length < 30 ? window.t("tool.status.runningName", { name }) : window.t("tool.status.runningTool");
   }
 
+  const TOOL_VERB_KEY = {
+    "Read": "tool.Read", "Write": "tool.Write", "Run": "tool.Run",
+    "List": "tool.List", "Search": "tool.Search", "Edit": "tool.Edit",
+    "Web search": "tool.WebSearch", "Fetch": "tool.Fetch",
+    "Generate": "tool.Generate", "Delete": "tool.Delete",
+  };
+  function localizedToolVerb(v) {
+    if (!v) return v;
+    const key = TOOL_VERB_KEY[v];
+    return key ? window.t(key) : v;
+  }
   function toolLabel(call) {
     const name = toolName(call);
     const kind = toolKind(call);
@@ -7245,8 +7256,8 @@
     // predict, fall back to grok's own already-formatted title, which is safe and
     // human-readable, so the call still shows — just without a synthesized target.
 
-    if (verb && target) return `${verb} ${target}`;
-    if (verb) return verb;
+    if (verb && target) return `${localizedToolVerb(verb)} ${target}`;
+    if (verb) return localizedToolVerb(verb);
     const title = (call.title || "").trim();
     if (title) return title.length > 50 ? title.slice(0, 47) + "…" : title;
     return name || "tool";
