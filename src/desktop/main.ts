@@ -30,6 +30,7 @@ import { GrokSidebar } from "../sidebar";
 import { Uri } from "../host";
 import type { HostContext, HostDisposable } from "../host";
 import { ConfigStore, SensitiveConfigStore } from "./config-store";
+import { localeFromConfig, type Locale } from "../i18n";
 import { createAppResourceHandler } from "./app-resource-handler";
 import type { DesktopOpenFileContext } from "./desktop-policy";
 import { createElectronHost, ensureWorkspaceRoot, type ElectronRemoteActions } from "./electron-host";
@@ -197,7 +198,7 @@ function pinAppDocumentZoom(win: BrowserWindow | null): void {
  */
 export function buildDesktopAppMenu(
   actions?: DesktopAppMenuActions,
-  opts?: { isPackaged?: boolean },
+  opts?: { isPackaged?: boolean; locale?: Locale },
 ): ElectronMenu {
   const isPackaged = opts?.isPackaged ?? app.isPackaged;
   return Menu.buildFromTemplate(
@@ -205,6 +206,7 @@ export function buildDesktopAppMenu(
       isPackaged,
       platform: process.platform,
       actions,
+      locale: opts?.locale,
       openPublicRepo: () => {
         void shell.openExternal(DESKTOP_PUBLIC_REPO_URL);
       },
@@ -478,7 +480,12 @@ async function createApp(): Promise<void> {
         zoomOut: () => applyDesktopCssZoom("out"),
         resetZoom: () => applyDesktopCssZoom("reset"),
       },
-      { isPackaged },
+      {
+        isPackaged,
+        locale: localeFromConfig(
+          config.getConfiguration("grok").get("language", "en"),
+        ),
+      },
     ),
   );
 

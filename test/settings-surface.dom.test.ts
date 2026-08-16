@@ -11,8 +11,16 @@ const settingsSrc = readFileSync(
   "utf8",
 );
 
+const i18nSrc = readFileSync(
+  fileURLToPath(new URL("../media/i18n.js", import.meta.url)),
+  "utf8",
+);
+
 function loadSettings() {
   const window = new Window({ url: "https://localhost/" });
+  // Mirror getHtml(): the i18n runtime installs window.t before settings.js
+  // is evaluated, so its strings resolve to English (not raw keys).
+  (window as unknown as { eval: (src: string) => void }).eval(i18nSrc);
   (window as unknown as { eval: (src: string) => void }).eval(settingsSrc);
   return (window as unknown as { GrokSettings: {
     ROWS: Array<{ id: string; category: string; href?: string; enabled?: (s: unknown) => boolean }>;
@@ -459,6 +467,9 @@ describe("settings overlay keyboard containment", () => {
 describe("settings tab has no overlay Back to app", () => {
   it("omits the Back to app link on the standalone VS Code tab", () => {
     const window = new Window({ url: "https://localhost/" });
+    // Mirror getHtml(): i18n runtime loads before settings.js so its strings
+    // resolve to English rather than raw keys.
+    (window as unknown as { eval: (src: string) => void }).eval(i18nSrc);
     (window as unknown as { eval: (src: string) => void }).eval(settingsSrc);
     const api = (window as unknown as { GrokSettings: ReturnType<typeof loadSettings> }).GrokSettings;
     const doc = window.document as unknown as Document;
@@ -527,6 +538,9 @@ describe("settings restore skips disabled rows", () => {
 
   it("hides Restore defaults when the page has nothing restorable to change", () => {
     const window = new Window({ url: "https://localhost/" });
+    // Mirror getHtml(): i18n runtime loads before settings.js so its strings
+    // resolve to English rather than raw keys.
+    (window as unknown as { eval: (src: string) => void }).eval(i18nSrc);
     (window as unknown as { eval: (src: string) => void }).eval(settingsSrc);
     const api = (window as unknown as { GrokSettings: ReturnType<typeof loadSettings> }).GrokSettings;
     const doc = window.document as unknown as Document;
@@ -550,6 +564,9 @@ describe("settings restore skips disabled rows", () => {
 
   it("confirms Restore defaults in-surface, lists concrete targets, and cancel posts nothing", () => {
     const window = new Window({ url: "https://localhost/" });
+    // Mirror getHtml(): i18n runtime loads before settings.js so its strings
+    // resolve to English rather than raw keys.
+    (window as unknown as { eval: (src: string) => void }).eval(i18nSrc);
     (window as unknown as { eval: (src: string) => void }).eval(settingsSrc);
     const api = (window as unknown as { GrokSettings: ReturnType<typeof loadSettings> }).GrokSettings;
     const doc = window.document as unknown as Document;
@@ -591,6 +608,9 @@ describe("settings restore skips disabled rows", () => {
 
   it("Restore confirm applies only restorable rows and never posts voice text setters", () => {
     const window = new Window({ url: "https://localhost/" });
+    // Mirror getHtml(): i18n runtime loads before settings.js so its strings
+    // resolve to English rather than raw keys.
+    (window as unknown as { eval: (src: string) => void }).eval(i18nSrc);
     (window as unknown as { eval: (src: string) => void }).eval(settingsSrc);
     const api = (window as unknown as { GrokSettings: ReturnType<typeof loadSettings> }).GrokSettings;
     const doc = window.document as unknown as Document;
@@ -627,6 +647,9 @@ describe("settings restore skips disabled rows", () => {
 
   it("Voice Restore defaults does not post setSummarizeRepliesAloud while the switch is disabled", () => {
     const window = new Window({ url: "https://localhost/" });
+    // Mirror getHtml(): i18n runtime loads before settings.js so its strings
+    // resolve to English rather than raw keys.
+    (window as unknown as { eval: (src: string) => void }).eval(i18nSrc);
     (window as unknown as { eval: (src: string) => void }).eval(settingsSrc);
     const api = (window as unknown as { GrokSettings: ReturnType<typeof loadSettings> }).GrokSettings;
     const doc = window.document as unknown as Document;
@@ -670,6 +693,9 @@ describe("review lows (settings / telemetry / voice write scope)", () => {
 
   it("hides How it works on the VS Code settings tab", () => {
     const window = new Window({ url: "https://localhost/" });
+    // Mirror getHtml(): i18n runtime loads before settings.js so its strings
+    // resolve to English rather than raw keys.
+    (window as unknown as { eval: (src: string) => void }).eval(i18nSrc);
     (window as unknown as { eval: (src: string) => void }).eval(settingsSrc);
     const api = (window as unknown as { GrokSettings: ReturnType<typeof loadSettings> }).GrokSettings;
     const doc = window.document as unknown as Document;
@@ -728,6 +754,9 @@ describe("settings About section", () => {
 
   it("puts the non-affiliation disclaimer only at the bottom of the About page", () => {
     const window = new Window({ url: "https://localhost/" });
+    // Mirror getHtml(): i18n runtime loads before settings.js so its strings
+    // resolve to English rather than raw keys.
+    (window as unknown as { eval: (src: string) => void }).eval(i18nSrc);
     (window as unknown as { eval: (src: string) => void }).eval(settingsSrc);
     const api = (window as unknown as { GrokSettings: ReturnType<typeof loadSettings> }).GrokSettings;
     const doc = window.document as unknown as Document;

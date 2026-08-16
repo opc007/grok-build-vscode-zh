@@ -1787,7 +1787,7 @@
     // (background + border) that reads as a stray box in the popover.
     const act = document.createElement("div");
     act.className = "toolbar-popover-item popover-action context-compact" + (used ? "" : " disabled");
-    act.textContent = "Compact conversation";
+    act.textContent = window.t("chat.action.compact");
     act.title = used ? "Summarize the conversation so far to free up context" : "Nothing to compact yet";
     if (used) {
       act.onclick = (e) => {
@@ -1986,7 +1986,7 @@
       const cancelBtn = document.createElement("button");
       cancelBtn.type = "button";
       cancelBtn.className = "confirm-btn";
-      cancelBtn.textContent = "Cancel";
+      cancelBtn.textContent = window.t("common.cancel");
       const done = (v) => {
         document.removeEventListener("keydown", onKey, true);
         overlay.remove();
@@ -2002,7 +2002,7 @@
       actions.appendChild(cancelBtn);
       const choices = Array.isArray(opts.actions) && opts.actions.length
         ? opts.actions
-        : [{ id: "confirm", label: opts.confirmLabel || "OK", danger: !!opts.danger }];
+        : [{ id: "confirm", label: opts.confirmLabel || window.t("common.ok"), danger: !!opts.danger }];
       let focusButton = cancelBtn;
       for (const choice of choices) {
         const button = document.createElement("button");
@@ -2141,19 +2141,19 @@
     const copyBtn = document.createElement("button");
     copyBtn.type = "button";
     copyBtn.className = "preview-action-btn";
-    copyBtn.textContent = "Copy";
+    copyBtn.textContent = window.t("chat.action.copy");
     copyBtn.onclick = (e) => {
       e.stopPropagation();
       if (!navigator.clipboard || !navigator.clipboard.writeText) return;
       navigator.clipboard.writeText(copyText).then(() => {
-        copyBtn.textContent = "Copied";
-        setTimeout(() => { if (copyBtn.isConnected) copyBtn.textContent = "Copy"; }, 1200);
+        copyBtn.textContent = window.t("chat.action.copied");
+        setTimeout(() => { if (copyBtn.isConnected) copyBtn.textContent = window.t("chat.action.copy"); }, 1200);
       });
     };
     const saveBtn = document.createElement("button");
     saveBtn.type = "button";
     saveBtn.className = "preview-action-btn";
-    saveBtn.textContent = "Save As";
+    saveBtn.textContent = window.t("chat.action.saveAs");
     saveBtn.onclick = (e) => {
       e.stopPropagation();
       const message = { type: "openText", content: copyText, filename };
@@ -2424,7 +2424,7 @@
       const cancelBtn = document.createElement("button");
       cancelBtn.type = "button";
       cancelBtn.className = "confirm-btn";
-      cancelBtn.textContent = "Cancel";
+      cancelBtn.textContent = window.t("common.cancel");
       const okBtn = document.createElement("button");
       okBtn.type = "button";
       okBtn.className = "confirm-btn confirm-primary";
@@ -3111,13 +3111,13 @@
     primary.type = "button";
     primary.className = "rail-update-open";
     if (ready) {
-      primary.textContent = "Restart now";
+      primary.textContent = window.t("chat.update.restartNow");
       primary.addEventListener("click", (e) => {
         e.stopPropagation();
         vscode.postMessage({ type: "restartToUpdate" });
       });
     } else {
-      primary.textContent = "Open release page";
+      primary.textContent = window.t("chat.update.openReleasePage");
       primary.addEventListener("click", (e) => {
         e.stopPropagation();
         vscode.postMessage({ type: "openUpdateRelease", url });
@@ -3126,7 +3126,7 @@
     const dismiss = document.createElement("button");
     dismiss.type = "button";
     dismiss.className = "rail-update-dismiss";
-    dismiss.textContent = "Not now";
+    dismiss.textContent = window.t("chat.update.notNow");
     dismiss.addEventListener("click", (e) => {
       e.stopPropagation();
       panel.hidden = true;
@@ -3427,10 +3427,10 @@
   // Dashboard dot in the history dropdown. Gray (the `none` default) at rest; the
   // labels double as the dot's tooltip (none → no tooltip).
   const DOT_LABEL = {
-    working: "Working",
-    "needs-you": "Needs you",
-    unread: "Finished while no view was watching",
-    error: "Errored while no view was watching",
+    working: window.t("chat.status.working"),
+    "needs-you": window.t("chat.status.needsYou"),
+    unread: window.t("chat.status.unread"),
+    error: window.t("chat.status.error"),
   };
 
   function applySessionDot(dot, value) {
@@ -3580,7 +3580,7 @@
     if (!state.repos.length) {
       const empty = document.createElement("div");
       empty.className = "history-empty";
-      empty.textContent = "No repositories with Grok sessions.";
+      empty.textContent = window.t("chat.empty.noRepositories");
       repoPopover.appendChild(empty);
       return;
     }
@@ -9609,9 +9609,9 @@
 
   // Verb shown on a resolved (minimized) permission card.
   const PERM_VERB = {
-    allow_always: "Allowed",
-    allow_once: "Allowed",
-    reject_once: "Rejected",
+    allow_always: window.t("perm.resolved.allowed"),
+    allow_once: window.t("perm.resolved.allowed"),
+    reject_once: window.t("perm.resolved.rejected"),
   };
 
   // Replace a permission card with a single muted, non-interactive line once the
@@ -9624,7 +9624,7 @@
     line.className = "perm-resolved-line perm-" + (kind === "reject_once" ? "rejected" : "allowed");
     const verb = document.createElement("span");
     verb.className = "perm-resolved-verb";
-    verb.textContent = PERM_VERB[kind] || "Answered";
+    verb.textContent = PERM_VERB[kind] || window.t("perm.resolved.answered");
     line.appendChild(verb);
     const what = document.createElement("span");
     what.className = "perm-resolved-what";

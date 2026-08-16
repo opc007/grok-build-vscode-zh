@@ -8,14 +8,31 @@
  * through the existing set* / open* messages so the sidebar cannot desync.
  */
 (function (root) {
+  // i18n handle. In the browser media/i18n.js loads first and installs
+  // window.t. When settings.js is imported directly in Node (some unit
+  // tests do this), window.t is absent, so fall back to the embedded
+  // English dictionary exported by media/i18n.js. As a last resort, return
+  // the raw key so the surface still renders.
+  function acquireT() {
+    if (typeof root.t === "function") return root.t;
+    try {
+      var m = require("./i18n.js");
+      if (m && typeof m.t === "function") return m.t;
+    } catch (e) {
+      // Not in Node, or i18n.js unavailable — fall through.
+    }
+    return function (key) { return key; };
+  }
+  const t = acquireT();
+
   const CATEGORIES = [
-    { id: "general", title: "General", restore: true },
-    { id: "voice", title: "Voice", restore: true },
-    { id: "notifications", title: "Notifications", restore: true },
-    { id: "providers", title: "Providers", restore: false },
-    { id: "account", title: "Account", restore: false },
-    { id: "advanced", title: "Advanced", restore: false },
-    { id: "about", title: "About", restore: false },
+    { id: "general", title: t("settings.category.general"), restore: true },
+    { id: "voice", title: t("settings.category.voice"), restore: true },
+    { id: "notifications", title: t("settings.category.notifications"), restore: true },
+    { id: "providers", title: t("settings.category.providers"), restore: false },
+    { id: "account", title: t("settings.category.account"), restore: false },
+    { id: "advanced", title: t("settings.category.advanced"), restore: false },
+    { id: "about", title: t("settings.category.about"), restore: false },
   ];
 
   // Lucide-style stroke icons — same language as chat.js ICON. Labels stay
@@ -35,12 +52,10 @@
   const GITHUB_ISSUE_FEATURE_URL = GITHUB_REPO_URL + "/issues/new?labels=enhancement";
   const SUPPORT_MAILTO = "mailto:support@productcompass.pm";
   const ABOUT_DISCLAIMER =
-    "Unofficial · community-built · MIT | " +
-    "A VS Code UI for SpaceXAI’s Grok Build CLI - not affiliated with or endorsed by SpaceXAI (formerly xAI). " +
-    "Grok, Grok Build, and xAI are trademarks of xAI; this project uses those names only to describe what it’s compatible with.";
+    t("settings.about.disclaimer");
 
   const TELEMETRY_COPY =
-    "Anonymous usage stats only: a single session-start event with an anonymous install id — never prompts, code, file paths or names, and no identity. The IP address is discarded, never stored.";
+    t("settings.about.telemetry");
 
   function escapeHtml(s) {
     return String(s ?? "")
@@ -148,14 +163,28 @@
   /** One sentence, one control. Visibility is decided separately. */
   const ROWS = [
     {
+      id: "language",
+      category: "general",
+      title: t("settings.language.title"),
+      description: t("settings.language.description"),
+      kind: "select",
+      options: (window.__I18N && window.__I18N.locales
+        ? window.__I18N.locales
+        : [{ id: "en", label: "English" }, { id: "zh-CN", label: "简体中文" }]
+      ).map(function (l) { return { value: l.id, label: l.label }; }),
+      defaultValue: "en",
+      get: (s) => (s && s.language) || "en",
+      message: (value) => ({ type: "setLanguage", locale: value }),
+    },
+    {
       id: "appPurpose",
       category: "general",
-      title: "Use this app for",
-      description: "Knowledge work hides worktrees, thinking traces, and tool details. Coding unlocks those controls, still off by default.",
+      title: t("settings.appPurpose.title"),
+      description: t("settings.appPurpose.description"),
       kind: "select",
       options: [
-        { value: "knowledge", label: "Knowledge work" },
-        { value: "coding", label: "Coding" },
+        { value: "knowledge", label: t("settings.appPurpose.knowledge") },
+        { value: "coding", label: t("settings.appPurpose.coding") },
       ],
       defaultValue: "knowledge",
       get: (s) => purposeOf(s),
@@ -164,7 +193,7 @@
     {
       id: "telemetryDesktop",
       category: "general",
-      title: "Anonymous usage stats",
+      title: t("settings.telemetry.title"),
       description: TELEMETRY_COPY,
       kind: "toggle",
       defaultValue: true,
@@ -175,7 +204,7 @@
     {
       id: "telemetryVsCode",
       category: "general",
-      title: "Anonymous usage stats",
+      title: t("settings.telemetry.title"),
       description: TELEMETRY_COPY,
       kind: "action",
       actionLabel: "Open VS Code settings",
@@ -185,7 +214,7 @@
     {
       id: "telemetryRemote",
       category: "general",
-      title: "Anonymous usage stats",
+      title: t("settings.telemetry.title"),
       description: "",
       kind: "status",
       visible: (s, env) => !!(env && env.isRemote),
@@ -198,8 +227,8 @@
     {
       id: "chatFontScale",
       category: "general",
-      title: "Text size",
-      description: "Chat text size on this device only. Keyboard zoom stays in sync with this slider.",
+      title: t("settings.textSize.title"),
+      description: t("settings.textSize.description"),
       kind: "range",
       min: 80,
       max: 160,
@@ -212,7 +241,7 @@
     {
       id: "openChatFontScale",
       category: "general",
-      title: "Text size",
+      title: t("settings.textSize.title"),
       description: "Chat zoom lives in VS Code settings so it can stay a user or workspace preference.",
       kind: "action",
       actionLabel: "Open VS Code settings",
@@ -222,8 +251,8 @@
     {
       id: "showThinking",
       category: "general",
-      title: "Show thinking traces",
-      description: "Show Grok's reasoning traces in chat, including on already-loaded sessions.",
+      title: t("settings.showThinking.title"),
+      description: t("settings.showThinking.description"),
       kind: "toggle",
       defaultValue: false,
       visible: (s) => purposeOf(s) === "coding",
@@ -233,8 +262,8 @@
     {
       id: "expandCommandOutputs",
       category: "general",
-      title: "Expand tool details",
-      description: "Pre-open each command's IN/OUT block and each edit's inline diff instead of clicking a row to expand it.",
+      title: t("settings.expandToolDetails.title"),
+      description: t("settings.expandToolDetails.description"),
       kind: "toggle",
       defaultValue: false,
       visible: (s) => purposeOf(s) === "coding",
@@ -244,8 +273,8 @@
     {
       id: "steerByDefault",
       category: "general",
-      title: "Steer by default",
-      description: "Send straight into the running turn instead of queueing until it finishes. Steering does not cancel work in progress.",
+      title: t("settings.steerByDefault.title"),
+      description: t("settings.steerByDefault.description"),
       kind: "toggle",
       defaultValue: false,
       visible: (s, env) => !env || env.steerSupported !== false,
@@ -301,8 +330,8 @@
     {
       id: "readRepliesAloud",
       category: "voice",
-      title: "Read replies aloud",
-      description: "Read completed replies aloud. Code blocks are skipped.",
+      title: t("settings.readRepliesAloud.title"),
+      description: t("settings.readRepliesAloud.description"),
       kind: "toggle",
       defaultValue: false,
       visible: (s, env) => !env || env.ttsAvailable !== false,
@@ -313,8 +342,8 @@
     {
       id: "summarizeRepliesAloud",
       category: "voice",
-      title: "Read simplified summaries",
-      description: "Use xAI to speak a brief summary of each reply. This costs an extra call and falls back to the full text on failure.",
+      title: t("settings.summarizeRepliesAloud.title"),
+      description: t("settings.summarizeRepliesAloud.description"),
       kind: "toggle",
       defaultValue: true,
       visible: (s, env) => !env || env.ttsAvailable !== false,
@@ -326,7 +355,7 @@
     {
       id: "ttsUnavailable",
       category: "voice",
-      title: "Read replies aloud",
+      title: t("settings.readRepliesAloud.title"),
       description: "Speech synthesis is not supported in this client.",
       kind: "status",
       visible: (s, env) => !!(env && env.ttsAvailable === false),
@@ -334,8 +363,8 @@
     {
       id: "soundNotifications",
       category: "notifications",
-      title: "Sound notifications",
-      description: "Play a short sound when a turn finishes or errors, only when the Grok panel is not focused.",
+      title: t("settings.soundNotifications.title"),
+      description: t("settings.soundNotifications.description"),
       kind: "toggle",
       defaultValue: false,
       get: (s) => !!(s && s.soundNotifications),
@@ -344,8 +373,8 @@
     {
       id: "processingSound",
       category: "notifications",
-      title: "Still-processing sound",
-      description: "Play a quiet reminder while a turn is still working. It starts after seven seconds and repeats every eight seconds.",
+      title: t("settings.processingSound.title"),
+      description: t("settings.processingSound.description"),
       kind: "toggle",
       defaultValue: false,
       get: (s) => !!(s && s.processingSound),

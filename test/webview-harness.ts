@@ -12,8 +12,10 @@
 import { Window } from "happy-dom";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { dictionaryFor, SUPPORTED_LOCALES } from "../src/i18n";
 
 const read = (rel: string) => readFileSync(fileURLToPath(new URL(rel, import.meta.url)), "utf8");
+const i18nSrc = read("../media/i18n.js");
 const helperSrc = read("../media/webview-helpers.js");
 const settingsSrc = read("../media/settings.js");
 const filePanelSrc = read("../media/file-panel.js");
@@ -102,6 +104,15 @@ export function bootWebview(opts: {
   // affordances (repo switcher) and suppresses the host-only ones.
   if (opts.remote) (window as any).grokRemoteClient = true;
   if (opts.beforeScripts) opts.beforeScripts(window);
+  // Mirror getHtml(): the i18n runtime reads window.__I18N (locale + dictionary)
+  // and exposes window.t. Settings/chat call window.t, so it must be present
+  // before those scripts evaluate.
+  (window as any).__I18N = {
+    locale: "en",
+    dict: dictionaryFor("en"),
+    locales: SUPPORTED_LOCALES,
+  };
+  (window as any).eval(i18nSrc);
   (window as any).eval(helperSrc);
   (window as any).eval(settingsSrc);
   // Relay chat.html loads this before chat.js; VS Code does not load it at all,

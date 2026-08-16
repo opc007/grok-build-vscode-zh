@@ -9,6 +9,15 @@ import type {
   HostEditorWebview,
 } from "./host";
 import { Uri, disposeAll, formatRemoteInstallId, shouldRehydrateOnWebviewReady } from "./host";
+import {
+  DEFAULT_LOCALE,
+  LANGUAGE_SETTING,
+  SUPPORTED_LOCALES,
+  dictionaryFor,
+  localeFromConfig,
+  t,
+  type Locale,
+} from "./i18n";
 import { isCanonicallyInsideRoot } from "./file-tree";
 import * as fs from "node:fs";
 import * as os from "node:os";
@@ -1127,6 +1136,11 @@ export class GrokSidebar {
       }
       if (e.affectsConfiguration("grok.showThinking")) {
         this.postShowThinking();
+      }
+      if (e.affectsConfiguration("grok.language")) {
+        // Re-render the webview so every surface (static chrome + Settings)
+        // picks up the new locale. The chat rehydrates from the host.
+        this.reloadWebviewForLocale();
       }
       if (e.affectsConfiguration("grok.codexCliPath")) {
         this.codexCliPath = undefined;
@@ -7221,6 +7235,15 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
         this.post({ type: "appPurpose", value: purpose });
         break;
       }
+      case "setLanguage": {
+        const next = localeFromConfig(msg.locale);
+        await this.host
+          .getConfiguration("grok")
+          .update(LANGUAGE_SETTING, next, "global");
+        // The config watcher reloads the webview so the new locale applies
+        // everywhere (static chrome + Settings). Chat rehydrates from the host.
+        break;
+      }
       case "applyWorktree":
         // The webview's custom confirm already ran (native modals stay only on
         // the Command-Palette path).
@@ -9371,6 +9394,21 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
     this.post({ type: "showThinking", value: this.showThinking() });
   }
 
+  /** Active UI locale, read from the `grok.language` setting (defaults to English). */
+  private activeLocale(): Locale {
+    return localeFromConfig(
+      this.host.getConfiguration("grok").get(LANGUAGE_SETTING, DEFAULT_LOCALE)
+    );
+  }
+
+  /** Re-render the webview document so a locale change is applied everywhere.
+   *  The chat history rehydrates from the host, so only the UI shell reloads. */
+  private reloadWebviewForLocale(): void {
+    if (this.view) {
+      this.view.webview.html = this.getHtml(this.view.webview);
+    }
+  }
+
   /** Anonymous, per-install GUID — generated once and kept in shared client state
    *  (so it survives extension updates and identifies this machine across clients).
    *  It's an opaque random id, not tied to any
@@ -11195,9 +11233,11 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
     // Additive: older webviews ignore an unknown field; older hosts omit it
     // and command View all then leaves language unset.
     const commandLanguage = commandLanguageForDialect(resolvedTerminalShellDialect());
+    const language = localeFromConfig(cfg.get(LANGUAGE_SETTING, DEFAULT_LOCALE));
     return {
       type: "initialState",
       effort: cfg.get("defaultEffort", ""),
+      language,
       cwd,
       useCtrlEnter: cfg.get("useCtrlEnterToSend", false),
       extVersion: this.context.extensionVersion,
@@ -14349,6 +14389,11 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
 
   private getHtml(webview: HostWebview): string {
     const nonce = getNonce();
+    const loc = this.activeLocale();
+    const lt: (key: string, vars?: Record<string, string | number>) => string = (
+      key,
+      vars
+    ) => t(loc, key, vars);
     // Join under extensionUri so remote hosts keep vscode-remote:// (Uri.file
     // on extensionPath.fsPath would point the webview at a missing local path).
     const mediaUri = (file: string) =>
@@ -14373,7 +14418,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
         <span class="mark" style="--rail-mark:url('${railMark}')" aria-hidden="true"></span>
         <span class="wordmark"><b>Grok</b> <span class="dim">Build</span></span>
       </span>
-      <button id="desk-rail-toggle" class="rail-icon-btn" type="button" title="Hide projects" aria-label="Hide projects" aria-expanded="true">
+      <button id="desk-rail-toggle" class="rail-icon-btn" type="button" title="${lt("chat.rail.hideProjects")}" aria-label="${lt("chat.rail.hideProjects")}" aria-expanded="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
       </button>
     </div>
@@ -14386,7 +14431,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
     <div id="rail-scroll" class="rail-scroll"></div>
     <div class="rail-foot">
       <div class="rail-user" aria-hidden="true"></div>
-      <button id="rail-gear-btn" class="rail-icon-btn" type="button" title="Settings" aria-label="Settings" hidden></button>
+      <button id="rail-gear-btn" class="rail-icon-btn" type="button" title="${lt("chat.composer.settings")}" aria-label="${lt("chat.composer.settings")}" hidden></button>
       <button id="desk-theme-toggle" class="rail-icon-btn" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">
         <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8"/></svg>
         <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.2 6.2 0 0 0 10.5 10.5z"/></svg>
@@ -14460,11 +14505,11 @@ ${openMain}
       <span id="session-name-repo" class="session-name-repo" hidden></span>
       <button id="session-name-edit" class="session-name-edit icon-btn" type="button" hidden></button>
     </div>
-    <button id="repo-btn" class="repo-chip" type="button" title="Choose repository"></button>
-    <button id="remote-btn" class="icon-btn remote-btn" title="Continue remotely" hidden></button>
-    <button id="history-btn" class="icon-btn" title="Session history"></button>
+    <button id="repo-btn" class="repo-chip" type="button" title="${lt("chat.composer.chooseRepository")}"></button>
+    <button id="remote-btn" class="icon-btn remote-btn" title="${lt("chat.composer.continueRemotely")}" hidden></button>
+    <button id="history-btn" class="icon-btn" title="${lt("chat.composer.sessionHistory")}"></button>
     ${this.host.canSwitchWorkspaceFolder ? `<div id="session-head-actions"></div>` : ""}
-    <button id="new-btn" class="icon-btn" title="New session"></button>
+    <button id="new-btn" class="icon-btn" title="${lt("chat.composer.newSession")}"></button>
     ${this.host.canSwitchWorkspaceFolder ? "" : `<div id="vscode-session-actions"></div>`}
     <div id="repo-popover" class="toolbar-popover repo-popover" hidden></div>
     <div id="history-popover" class="toolbar-popover history-popover" hidden></div>
@@ -14473,27 +14518,27 @@ ${fileShellOpen}
   <main id="messages" class="messages">
     <div class="welcome" id="welcome">
       <span class="welcome-mark" role="img" aria-label="Grok" style="--welcome-mark:url('${resourceUri("grok-icon.svg")}')"></span>
-      <h2>Grok Build (Community)</h2>
-      <p class="welcome-byline muted">by Paweł Huryn (<a href="https://www.productcompass.pm/" class="muted-link">The Product Compass</a>)</p>
-      <p id="welcome-version" class="muted welcome-status-busy"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg><span>Starting</span></p>
+      <h2>${lt("chat.welcome.heading")}</h2>
+      <p class="welcome-byline muted">${lt("chat.welcome.byline")} (<a href="https://www.productcompass.pm/" class="muted-link">The Product Compass</a>)</p>
+      <p id="welcome-version" class="muted welcome-status-busy"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg><span>${lt("chat.welcome.starting")}</span></p>
       <div id="welcome-onboarding"></div>
     </div>
   </main>
 
   <footer class="composer">
-    <button id="scroll-bottom-btn" class="scroll-bottom-btn" type="button" title="Scroll to bottom"></button>
+    <button id="scroll-bottom-btn" class="scroll-bottom-btn" type="button" title="${lt("chat.composer.scrollToBottom")}"></button>
     <div class="composer-card">
       <div id="attachments" class="attachments"></div>
       <div class="composer-input-wrap">
         <div id="input-highlight" class="input-highlight" aria-hidden="true" dir="auto"></div>
-        <textarea id="input" placeholder="Ask Grok..." rows="2" dir="auto"></textarea>
-        <button id="mic-btn" class="mic-btn" title="Voice control"></button>
+        <textarea id="input" placeholder="${lt("chat.composer.placeholder")}" rows="2" dir="auto"></textarea>
+        <button id="mic-btn" class="mic-btn" title="${lt("chat.composer.voice")}"></button>
       </div>
       <div class="composer-toolbar">
         <div class="toolbar-left">
-          <button id="add-btn" class="icon-btn" title="Add context"></button>
-          <button id="gear-btn" class="icon-btn" title="Settings"></button>
-          <div class="context-donut" id="donut" title="Context usage">
+          <button id="add-btn" class="icon-btn" title="${lt("chat.composer.addContext")}"></button>
+          <button id="gear-btn" class="icon-btn" title="${lt("chat.composer.settings")}"></button>
+          <div class="context-donut" id="donut" title="${lt("chat.composer.contextUsage")}">
             <svg width="16" height="16" viewBox="0 0 16 16">
               <circle cx="8" cy="8" r="6" fill="none" stroke="var(--vscode-editorWidget-border,#444)" stroke-width="3"/>
               <circle id="donut-arc" cx="8" cy="8" r="6" fill="none" stroke="var(--vscode-charts-green,#4ec9b0)" stroke-width="3" stroke-dasharray="0 999" transform="rotate(-90 8 8)"/>
@@ -14503,7 +14548,7 @@ ${fileShellOpen}
           <div id="chips"></div>
         </div>
         <div class="toolbar-right">
-          <button id="mode-btn" class="toolbar-btn" title="Pick mode"></button>
+          <button id="mode-btn" class="toolbar-btn" title="${lt("chat.mode.pick")}"></button>
           <button id="send-btn" class="send"></button>
         </div>
       </div>
@@ -14538,6 +14583,8 @@ ${closeMain}
   </script>
   <script nonce="${nonce}" src="${mediaUri("mathjax/tex-svg-full.js")}"></script>
   <script nonce="${nonce}" src="${mediaUri("mermaid/mermaid.min.js")}"></script>
+  <script nonce="${nonce}">window.__I18N=${JSON.stringify({ locale: this.activeLocale(), dict: dictionaryFor(this.activeLocale()), locales: SUPPORTED_LOCALES })};</script>
+  <script nonce="${nonce}" src="${mediaUri("i18n.js")}"></script>
   <script nonce="${nonce}" src="${mediaUri("webview-helpers.js")}"></script>
   <script nonce="${nonce}" src="${mediaUri("settings.js")}"></script>
   ${filePanelScript}

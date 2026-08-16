@@ -6,6 +6,7 @@
  */
 import type { MenuItemConstructorOptions } from "electron";
 import { DESKTOP_APP_FULL_NAME } from "./host-dialogs";
+import { t, DEFAULT_LOCALE, type Locale } from "../i18n";
 
 /** Env var set by `scripts/run-desktop.cjs --open-devtools` (desktop-dev). */
 export const DESKTOP_OPEN_DEVTOOLS_ENV = "GROK_DESKTOP_OPEN_DEVTOOLS";
@@ -104,7 +105,9 @@ export function desktopAppMenuTemplate(opts: {
   platform?: NodeJS.Platform;
   actions?: DesktopAppMenuActions;
   openPublicRepo?: () => void;
+  locale?: Locale;
 }): MenuItemConstructorOptions[] {
+  const locale = opts.locale ?? DEFAULT_LOCALE;
   const isMac = (opts.platform ?? process.platform) === "darwin";
   const openRepo =
     opts.openPublicRepo ??
@@ -121,7 +124,7 @@ export function desktopAppMenuTemplate(opts: {
       ? [
           {
             role: "toggleDevTools" as const,
-            label: "Toggle Developer Tools",
+            label: t(locale, "menu.view.toggleDevTools"),
             accelerator: DESKTOP_DEVTOOLS_ACCELERATOR,
           },
         ]
@@ -132,7 +135,7 @@ export function desktopAppMenuTemplate(opts: {
     // race. Keyboard Cmd+=/−/0 stay in chat.js (`setClientFontScale`) so a
     // menu accelerator cannot double-step. No roles here.
     {
-      label: "Actual Size",
+      label: t(locale, "menu.view.actualSize"),
       click: () => {
         try {
           actions?.resetZoom?.();
@@ -142,7 +145,7 @@ export function desktopAppMenuTemplate(opts: {
       },
     },
     {
-      label: "Zoom In",
+      label: t(locale, "menu.view.zoomIn"),
       click: () => {
         try {
           actions?.zoomIn?.();
@@ -152,7 +155,7 @@ export function desktopAppMenuTemplate(opts: {
       },
     },
     {
-      label: "Zoom Out",
+      label: t(locale, "menu.view.zoomOut"),
       click: () => {
         try {
           actions?.zoomOut?.();
@@ -171,7 +174,7 @@ export function desktopAppMenuTemplate(opts: {
           {
             label: DESKTOP_APP_FULL_NAME,
             submenu: [
-              { role: "about" as const, label: `About ${DESKTOP_APP_FULL_NAME}` },
+              { role: "about" as const, label: t(locale, "menu.help.about", { name: DESKTOP_APP_FULL_NAME }) },
               { type: "separator" as const },
               { role: "services" as const },
               { type: "separator" as const },
@@ -185,10 +188,10 @@ export function desktopAppMenuTemplate(opts: {
         ]
       : []),
     {
-      label: "File",
+      label: t(locale, "menu.file"),
       submenu: [
         {
-          label: "Add Project Folder…",
+          label: t(locale, "menu.file.addProjectFolder"),
           click: () => {
             try {
               actions?.addProjectFolder?.();
@@ -198,7 +201,7 @@ export function desktopAppMenuTemplate(opts: {
           },
         },
         {
-          label: "Close Project Folder",
+          label: t(locale, "menu.file.closeProjectFolder"),
           click: () => {
             try {
               actions?.removeProjectFolder?.();
@@ -208,11 +211,11 @@ export function desktopAppMenuTemplate(opts: {
           },
         },
         { type: "separator" },
-        isMac ? { role: "close" } : { role: "quit", label: "Quit" },
+        isMac ? { role: "close" } : { role: "quit", label: t(locale, "menu.file.quit") },
       ],
     },
     {
-      label: "Edit",
+      label: t(locale, "menu.edit"),
       submenu: [
         { role: "undo" },
         { role: "redo" },
@@ -224,20 +227,20 @@ export function desktopAppMenuTemplate(opts: {
       ],
     },
     {
-      label: "View",
+      label: t(locale, "menu.view"),
       submenu: viewSubmenu,
     },
     {
-      label: "Help",
+      label: t(locale, "menu.help"),
       submenu: [
         {
-          label: "GitHub Repository",
+          label: t(locale, "menu.help.githubRepo"),
           click: () => {
             openRepo();
           },
         },
         {
-          label: `About ${DESKTOP_APP_FULL_NAME}`,
+          label: t(locale, "menu.help.about", { name: DESKTOP_APP_FULL_NAME }),
           click: () => {
             openRepo();
           },

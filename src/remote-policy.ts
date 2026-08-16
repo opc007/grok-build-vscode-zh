@@ -369,6 +369,7 @@ export const INBOUND_DISPOSITION: Record<WebviewMsg["type"], InboundDisposition>
   // Desktop update notice click-through — a phone cannot update the desk.
   openUpdateRelease: "host-local",
   restartToUpdate: "host-local",
+  setLanguage: "host-local",
 };
 
 const TIER_RANK: Record<RemoteTier, number> = { "read-only": 0, propose: 1, full: 2 };

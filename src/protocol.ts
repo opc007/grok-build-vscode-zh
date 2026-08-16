@@ -173,6 +173,9 @@ export type HostMsg =
       /** Product telemetry opt-out. Absent on older hosts; remotes treat that
        *  as unknown and show the explanation without an on/off claim. */
       telemetryEnabled?: boolean;
+      /** UI locale for this app. Absent on older hosts; the webview falls back
+       *  to English. Additive so older clients keep working. */
+      language?: "en" | "zh-CN";
       capabilities: HostUiCapabilities }
   /** Live retraction of `capabilities.moveViewHint`, sent the moment the user
    *  opens the host's move-view picker. `initialState` is not re-sent on a
@@ -550,6 +553,8 @@ export type WebviewMsg =
   | { type: "setVoiceKeyterms"; value: string[] }
   /** Persist `grok.telemetry.enabled`. Desktop toggle; remotes do not send this. */
   | { type: "setTelemetryEnabled"; value: boolean }
+  /** Persist `grok.language` and switch the UI locale live. */
+  | { type: "setLanguage"; locale: "en" | "zh-CN" }
   /**
    * Attach a user-selected file. VS Code posts a `path` (file URI or absolute)
    * from the webview drag-drop surface. Desktop posts only a host-minted
@@ -749,7 +754,7 @@ const WEBVIEW_MESSAGE_TYPE_MAP: Record<WebviewMsg["type"], true> = {
   newWorktreeSession: true, applyWorktree: true, removeWorktree: true,
   rewindSession: true, editLastMessage: true, uiConfirmAnswer: true, workflowControl: true,
   remoteSignIn: true, remoteSignOut: true, unlinkRemoteDevice: true, openRemotePortal: true,
-  openUpdateRelease: true, restartToUpdate: true,
+  openUpdateRelease: true, restartToUpdate: true, setLanguage: true,
 };
 
 export const HOST_MESSAGE_TYPES: readonly HostMsg["type"][] = Object.keys(HOST_MESSAGE_TYPE_MAP) as HostMsg["type"][];
