@@ -6520,12 +6520,12 @@
       // used to double it up, and the transcript arrives as one batch anyway \u2014
       // so the wait that's worth announcing happens while the welcome is still
       // on screen, and the banner only ever duplicated this line.
-      setWelcomeStatus("Loading conversation", true);
+      setWelcomeStatus(window.t("chat.status.loadingConversation"), true);
       return;
     }
     const ver = $("welcome-version");
-    if (ver && ver.dataset.status === "Loading conversation") {
-      setWelcomeStatus(state.cliVersion ? `Connected \u00b7 v${state.cliVersion}` : "Connected", false);
+    if (ver && ver.dataset.status === window.t("chat.status.loadingConversation")) {
+      setWelcomeStatus(state.cliVersion ? `Connected \u00b7 v${state.cliVersion}` : window.t("chat.status.connected"), false);
     }
   }
 
@@ -6633,7 +6633,7 @@
       // click already owns that wait. Otherwise the rail highlights the
       // placeholder while the welcome says something unrelated.
       if (state.railTransition) setConversationLoading(true);
-      else setWelcomeStatus("Starting", true);
+      else setWelcomeStatus(window.t("chat.welcome.starting"), true);
       // The empty state is rebuilt on every new session, so the tip is too —
       // until the host stops advertising it.
       renderWelcomeTip();
@@ -6717,21 +6717,21 @@
     const ver = $("welcome-version");
     if (!onb) return;
     if (IS_REMOTE && (mode === "connect-agent" || mode === "codex-login" || mode === "auth-required")) {
-      if (ver) setWelcomeStatus("Sign in at the desk", false);
+      if (ver) setWelcomeStatus(window.t("chat.status.signInDesk"), false);
       const providerName = mode === "codex-login" ? "Codex" : mode === "auth-required" ? "Grok" : "an agent";
       onb.innerHTML =
         `<div class="onb">` +
-          `<p class="onb-heading">Sign in at the desk</p>` +
-          `<p class="onb-desc">${providerName} accounts can only be connected on the computer running this workspace. Sign in there, then refresh this remote view.</p>` +
+          `<p class="onb-heading">${window.t("chat.onb.signInDeskHeading")}</p>` +
+          `<p class="onb-desc">${window.t("chat.onb.signInDeskDesc", { provider: providerName })}</p>` +
         `</div>`;
       return;
     }
     if (mode === "connect-agent") {
-      if (ver) setWelcomeStatus("Connect an agent", false);
+      if (ver) setWelcomeStatus(window.t("chat.status.connectAgent"), false);
       onb.innerHTML =
         `<div class="onb onb-connect">` +
-          `<p class="onb-heading">Connect an agent</p>` +
-          `<p class="onb-desc">Choose the command-line agent that will own this conversation.</p>` +
+          `<p class="onb-heading">${window.t("chat.onb.connectAgentHeading")}</p>` +
+          `<p class="onb-desc">${window.t("chat.onb.connectAgentDesc")}</p>` +
           `<div class="onb-agent-grid">` +
             `<button class="onb-agent-tile primary onb-action" type="button" data-act="connectProvider" data-provider="grok">` +
               `<span class="onb-agent-mark">${providerLogoMarkup("grok")}</span><span><strong>Grok</strong><small>Recommended default</small></span>` +
@@ -6742,10 +6742,10 @@
           `</div>` +
         `</div>`;
     } else if (mode === "missing-cli") {
-      if (ver) setWelcomeStatus("CLI not installed", false);
+      if (ver) setWelcomeStatus(window.t("chat.status.cliNotInstalled"), false);
       if (IS_REMOTE) {
-        onb.innerHTML = `<div class="onb"><p class="onb-heading">Grok CLI is missing at the desk</p>` +
-          `<p class="onb-desc">Install it on the computer running this workspace, then refresh this remote view.</p></div>`;
+        onb.innerHTML = `<div class="onb"><p class="onb-heading">${window.t("chat.onb.grokCliMissingDeskHeading")}</p>` +
+          `<p class="onb-desc">${window.t("chat.onb.grokCliMissingDeskDesc")}</p></div>`;
         return;
       }
       const installCmd = info.platform === "win32"
@@ -6753,7 +6753,7 @@
         : "curl -fsSL https://x.ai/cli/install.sh | bash";
       onb.innerHTML =
         `<div class="onb">` +
-          `<p class="onb-heading">Install the Grok CLI</p>` +
+          `<p class="onb-heading">${window.t("chat.onb.installGrokCliHeading")}</p>` +
           `<div class="onb-cmd">` +
             `<code>${installCmd}</code>` +
             `<button class="onb-copy" type="button" title="Copy" data-cmd="${installCmd}">${ICON.copy}</button>` +
@@ -6762,10 +6762,10 @@
           `<button class="onb-action onb-secondary" type="button" data-act="recheckProvider" data-provider="${info.provider || "grok"}">Re-check connection</button>` +
         `</div>`;
     } else if (mode === "missing-codex") {
-      if (ver) setWelcomeStatus("Codex CLI not found", false);
+      if (ver) setWelcomeStatus(window.t("chat.status.codexNotFound"), false);
       if (IS_REMOTE) {
-        onb.innerHTML = `<div class="onb"><p class="onb-heading">Codex CLI is missing at the desk</p>` +
-          `<p class="onb-desc">Install or configure Codex on the computer running this workspace, then refresh this remote view.</p></div>`;
+        onb.innerHTML = `<div class="onb"><p class="onb-heading">${window.t("chat.onb.codexCliMissingDeskHeading")}</p>` +
+          `<p class="onb-desc">${window.t("chat.onb.codexCliMissingDeskDesc")}</p></div>`;
         return;
       }
       const installCmd = "npm i -g @openai/codex";
@@ -6781,8 +6781,8 @@
       const reason = info.reason || install.reason;
       onb.innerHTML =
         `<div class="onb">` +
-          `<p class="onb-heading">Install the Codex CLI</p>` +
-          `<p class="onb-desc">Install the pinned official Codex release into this app's storage, or use your own installation.</p>` +
+          `<p class="onb-heading">${window.t("chat.onb.installCodexCliHeading")}</p>` +
+          `<p class="onb-desc">${window.t("chat.onb.installCodexDesc")}</p>` +
           (reason ? `<p class="onb-install-error" role="alert">${escapeHtml(reason)}</p>` : "") +
           (installing
             ? `<div class="onb-install-progress" role="status"><span>${escapeHtml(progressLabel)}</span>` +
@@ -6794,28 +6794,28 @@
           `<button class="onb-action onb-secondary" type="button" data-act="recheckProvider" data-provider="codex">Re-check</button>` +
         `</div>`;
     } else if (mode === "codex-login") {
-      if (ver) setWelcomeStatus("Finish signing in", false);
+      if (ver) setWelcomeStatus(window.t("chat.status.finishSignIn"), false);
       onb.innerHTML =
         `<div class="onb">` +
-          `<p class="onb-heading">Complete <code>codex login</code></p>` +
-          `<p class="onb-desc">Finish the sign-in flow in the terminal, then continue here.</p>` +
+          `<p class="onb-heading">${window.t("chat.onb.codexLoginHeading")}</p>` +
+          `<p class="onb-desc">${window.t("chat.onb.codexLoginDesc")}</p>` +
           `<button class="onb-action onb-secondary" type="button" data-act="connectProvider" data-provider="codex">Open terminal &amp; run <code>codex login</code></button>` +
           `<button class="onb-action" type="button" data-act="recheckProvider" data-provider="codex">Done - connect Codex</button>` +
         `</div>`;
     } else if (mode === "auth-required") {
-      if (ver) setWelcomeStatus("Authentication required", false);
+      if (ver) setWelcomeStatus(window.t("chat.status.authRequired"), false);
       onb.innerHTML =
         `<div class="onb">` +
-          `<p class="onb-heading">Sign in to continue</p>` +
-          `<p class="onb-desc"><strong>SuperGrok or X Premium+ subscription</strong> &mdash; either unlocks the <em>Grok Build</em> entitlement.</p>` +
+          `<p class="onb-heading">${window.t("chat.onb.authRequiredHeading")}</p>` +
+          `<p class="onb-desc">${window.t("chat.onb.authRequiredDesc1")}</p>` +
           `<button class="onb-action" type="button" data-act="runLogin">Open terminal &amp; run <code>grok login</code></button>` +
           `<p class="onb-or">or</p>` +
-          `<p class="onb-desc"><strong>API key</strong> &mdash; pay per token. Get a key at <a href="https://console.x.ai" class="onb-link">console.x.ai</a>, then add to your shell or a workspace <code>.env</code>:</p>` +
+          `<p class="onb-desc">${window.t("chat.onb.authRequiredApiDesc")}</p>` +
           `<div class="onb-cmd">` +
             `<code>XAI_API_KEY=your-key-here</code>` +
             `<button class="onb-copy" type="button" title="Copy" data-cmd="XAI_API_KEY=">${ICON.copy}</button>` +
           `</div>` +
-          `<p class="onb-desc">A cached sign-in takes precedence over the API key &mdash; run <code>grok logout</code> first to use the key. If signing in succeeds but prompts still fail, check the error in the chat: your account may lack the Grok Build entitlement.</p>` +
+          `<p class="onb-desc">${window.t("chat.onb.authRequiredKeyNote")}</p>` +
           `<button class="onb-action onb-secondary" type="button" data-act="recheckProvider" data-provider="grok">Re-check connection</button>` +
         `</div>`;
     } else {
@@ -8820,7 +8820,7 @@
       };
       if (paused) actions.appendChild(mk("Resume", "resume"));
       else actions.appendChild(mk("Pause", "pause"));
-      actions.appendChild(mk("Stop", "stop"));
+      actions.appendChild(mk(window.t("common.stop"), "stop"));
     } else {
       actions.hidden = true;
       actions.innerHTML = "";
@@ -8875,7 +8875,7 @@
       hdr.className = "thinking-header";
       // Chevron on the RIGHT (after the label), same glyph as tool groups; expand
       // state is driven by the `.expanded` class (CSS rotates it), like tools.
-      hdr.innerHTML = `<span class="thinking-icon">${ICON.brain}</span><span class="thinking-label">Thinking</span>${BLINK_DOTS}<span class="thinking-chevron" aria-hidden="true">${ICON.chevronRight}</span>`;
+      hdr.innerHTML = `<span class="thinking-icon">${ICON.brain}</span><span class="thinking-label">${window.t("chat.status.thinking")}</span>${BLINK_DOTS}<span class="thinking-chevron" aria-hidden="true">${ICON.chevronRight}</span>`;
       const body = document.createElement("div");
       body.className = "thinking-body";
       body.hidden = true;
@@ -9418,8 +9418,8 @@
     clearWelcome();
     const el = document.createElement("div");
     el.className = "thinking-indicator";
-    el.innerHTML = `<span class="thinking-indicator-icon">${ICON.brain}</span><span class="thinking-indicator-label">Thinking</span>${BLINK_DOTS}`;
-    el.setAttribute("aria-label", "Grok is thinking");
+    el.innerHTML = `<span class="thinking-indicator-icon">${ICON.brain}</span><span class="thinking-indicator-label">${window.t("chat.status.thinking")}</span>${BLINK_DOTS}`;
+    el.setAttribute("aria-label", window.t("chat.status.grokThinking"));
     messagesEl.appendChild(el);
     state.thinkingIndicatorEl = el;
     scrollToBottom();
@@ -10416,7 +10416,7 @@
     }
     const img = overlay.querySelector("img");
     img.src = src;
-    img.alt = label || "Attached image";
+    img.alt = label || window.t("chat.attach.imageAlt");
     overlay.hidden = false;
     overlay.querySelector(".image-preview-close").focus();
 
@@ -10722,7 +10722,7 @@
       sendBtn.disabled = false;
     } else {
       sendBtn.innerHTML = ICON.square;
-      sendBtn.title = "Stop";
+      sendBtn.title = window.t("common.stop");
       sendBtn.classList.add("stop");
       sendBtn.disabled = false;
     }
@@ -11768,7 +11768,7 @@
         // running. Keep showing Starting until the startup lock clears.
         if (msg.info.provider !== "codex") state.cliVersion = msg.info.version || "";
         state.startingPhase = true;
-        setWelcomeStatus("Starting", true);
+        setWelcomeStatus(window.t("chat.welcome.starting"), true);
         const onb = $("welcome-onboarding");
         if (onb) onb.innerHTML = "";
         break;
@@ -11777,7 +11777,7 @@
         // One-time hint while the silent `grok update` runs before the session
         // spawns; overwritten by Starting once grok connects, then Connected
         // once session startup finishes.
-        setWelcomeStatus("Updating Grok Build CLI", true);
+        setWelcomeStatus(window.t("chat.status.updatingCli"), true);
         break;
       }
       case "session": {
@@ -12595,7 +12595,7 @@
           if (state.startingPhase) {
             state.startingPhase = false;
             const ver = state.cliVersion ? ` · v${state.cliVersion}` : "";
-            setWelcomeStatus(`Connected${ver}`, false); // settled — no spinner
+            setWelcomeStatus(`${window.t("chat.status.connected")}${ver}`, false); // settled — no spinner
           }
         }
         // Refresh the gear popover's model/effort lock state if it's open.
