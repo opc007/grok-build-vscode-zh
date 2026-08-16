@@ -337,6 +337,9 @@ export function parseWebviewMsg(raw: unknown): WebviewMsg | null {
     case "openRemotePortal":
       if (!opt(raw.withHint, isBoolean)) return null;
       break;
+    case "setLanguage":
+      if (raw.locale !== "en" && raw.locale !== "zh-CN") return null;
+      break;
     default:
       return null;
   }
