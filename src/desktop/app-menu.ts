@@ -6,7 +6,7 @@
  */
 import type { MenuItemConstructorOptions } from "electron";
 import { DESKTOP_APP_FULL_NAME } from "./host-dialogs";
-import { t, DEFAULT_LOCALE, type Locale } from "../i18n";
+import { t, DEFAULT_LOCALE, SUPPORTED_LOCALES, type Locale } from "../i18n";
 
 /** Env var set by `scripts/run-desktop.cjs --open-devtools` (desktop-dev). */
 export const DESKTOP_OPEN_DEVTOOLS_ENV = "GROK_DESKTOP_OPEN_DEVTOOLS";
@@ -44,6 +44,8 @@ export interface DesktopAppMenuActions {
   zoomIn?: () => void;
   zoomOut?: () => void;
   resetZoom?: () => void;
+  /** Persist a new UI locale; the menu + webview re-localize from config. */
+  setLanguage?: (locale: Locale) => void;
 }
 
 /** Accelerator for Toggle Developer Tools (works with autoHideMenuBar). */
@@ -168,6 +170,22 @@ export function desktopAppMenuTemplate(opts: {
     { role: "togglefullscreen" },
   ];
 
+  // Language switcher: native-script labels (English / 简体中文) so the choice
+  // reads in its own tongue. Selecting one persists the locale; the menu + the
+  // webview re-localize from config (sidebar's config watcher reloads the UI).
+  const langSubmenu: MenuItemConstructorOptions[] = SUPPORTED_LOCALES.map((opt) => ({
+    label: opt.label,
+    type: "checkbox",
+    checked: locale === opt.id,
+    click: () => {
+      try {
+        actions?.setLanguage?.(opt.id);
+      } catch {
+        /* best-effort */
+      }
+    },
+  }));
+
   return [
     ...(isMac
       ? [
@@ -229,6 +247,10 @@ export function desktopAppMenuTemplate(opts: {
     {
       label: t(locale, "menu.view"),
       submenu: viewSubmenu,
+    },
+    {
+      label: t(locale, "menu.language"),
+      submenu: langSubmenu,
     },
     {
       label: t(locale, "menu.help"),

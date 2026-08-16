@@ -264,6 +264,7 @@ export const en: Record<string, string> = {
   "menu.help": "Help",
   "menu.help.githubRepo": "GitHub Repository",
   "menu.help.about": "About {name}",
+  "menu.language": "Language",
 };
 
 /** Simplified Chinese overrides. Only keys that differ from English. */
@@ -490,6 +491,7 @@ export const zhCN: Record<string, string> = {
   "menu.help": "帮助",
   "menu.help.githubRepo": "GitHub 仓库",
   "menu.help.about": "关于 {name}",
+  "menu.language": "语言",
 };
 
 /** Merge English with a locale's overrides so missing keys fall back to English. */

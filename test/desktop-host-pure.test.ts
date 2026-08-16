@@ -138,6 +138,7 @@ import {
   secondInstanceShouldOpenDevTools,
   shouldOpenDevToolsAtStartup,
 } from "../src/desktop/app-menu";
+import { SUPPORTED_LOCALES } from "../src/i18n";
 
 const testRepoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const filePanelJs = fs.readFileSync(path.join(testRepoRoot, "media", "file-panel.js"), "utf8");
@@ -1818,6 +1819,52 @@ describe("desktop DevTools gate (non-production only)", () => {
     expect(pkg.scripts["desktop-dev"]).toContain("--relay-dev");
     // Plain desktop must not open DevTools by default.
     expect(pkg.scripts.desktop).not.toContain(DESKTOP_OPEN_DEVTOOLS_FLAG);
+  });
+});
+
+describe("desktop application menu language switcher", () => {
+  function langMenu(locale: "en" | "zh-CN") {
+    const template = desktopAppMenuTemplate({ isPackaged: true, platform: "win32", locale });
+    const menu = template.find((item) => item.label === (locale === "zh-CN" ? "语言" : "Language"));
+    expect(menu).toBeTruthy();
+    return menu!;
+  }
+
+  it("exposes a top-level Language menu in the active locale", () => {
+    expect(langMenu("en").label).toBe("Language");
+    expect(langMenu("zh-CN").label).toBe("语言");
+  });
+
+  it("lists every supported locale as a checkbox item, checked for the active one", () => {
+    const menu = langMenu("en");
+    const submenu = menu.submenu as Array<{ label?: string; type?: string; checked?: boolean }>;
+    expect(submenu).toHaveLength(SUPPORTED_LOCALES.length);
+    for (const opt of SUPPORTED_LOCALES) {
+      const item = submenu.find((i) => i.label === opt.label);
+      expect(item).toBeTruthy();
+      expect(item!.type).toBe("checkbox");
+      // Labels are native-script (English / 简体中文), not translated.
+      expect(item!.checked).toBe(opt.id === "en");
+    }
+    const zh = langMenu("zh-CN");
+    const zhSub = zh.submenu as Array<{ label?: string; checked?: boolean }>;
+    expect(zhSub.find((i) => i.label === "简体中文")!.checked).toBe(true);
+    expect(zhSub.find((i) => i.label === "English")!.checked).toBe(false);
+  });
+
+  it("clicking an entry persists the chosen locale via setLanguage", () => {
+    const seen: string[] = [];
+    const menu = desktopAppMenuTemplate({
+      isPackaged: true,
+      platform: "win32",
+      locale: "en",
+      actions: { setLanguage: (l) => seen.push(l) },
+    }).find((item) => item.label === "Language")!;
+    const submenu = menu.submenu as Array<{ label?: string; click?: () => void }>;
+    submenu.find((i) => i.label === "简体中文")!.click!();
+    expect(seen).toEqual(["zh-CN"]);
+    submenu.find((i) => i.label === "English")!.click!();
+    expect(seen).toEqual(["zh-CN", "en"]);
   });
 });
 

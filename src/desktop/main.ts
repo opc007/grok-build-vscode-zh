@@ -30,7 +30,7 @@ import { GrokSidebar } from "../sidebar";
 import { Uri } from "../host";
 import type { HostContext, HostDisposable } from "../host";
 import { ConfigStore, SensitiveConfigStore } from "./config-store";
-import { localeFromConfig, type Locale } from "../i18n";
+import { localeFromConfig, LANGUAGE_SETTING, type Locale } from "../i18n";
 import { createAppResourceHandler } from "./app-resource-handler";
 import type { DesktopOpenFileContext } from "./desktop-policy";
 import { createElectronHost, ensureWorkspaceRoot, type ElectronRemoteActions } from "./electron-host";
@@ -467,27 +467,38 @@ async function createApp(): Promise<void> {
   // userData resolved under a branded folder). Window title uses short name.
   app.setName(DESKTOP_APP_FULL_NAME);
   const isPackaged = app.isPackaged;
-  Menu.setApplicationMenu(
-    buildDesktopAppMenu(
-      {
-        addProjectFolder: () => {
-          void sidebar?.addProjectFolder();
-        },
-        removeProjectFolder: () => {
-          void sidebar?.removeProjectFolder();
-        },
-        zoomIn: () => applyDesktopCssZoom("in"),
-        zoomOut: () => applyDesktopCssZoom("out"),
-        resetZoom: () => applyDesktopCssZoom("reset"),
-      },
-      {
+  // Actions for the desktop app menu. `setLanguage` persists the choice; both
+  // the menu (below) and the webview (sidebar's config watcher) re-localize.
+  const desktopMenuActions: DesktopAppMenuActions = {
+    addProjectFolder: () => {
+      void sidebar?.addProjectFolder();
+    },
+    removeProjectFolder: () => {
+      void sidebar?.removeProjectFolder();
+    },
+    zoomIn: () => applyDesktopCssZoom("in"),
+    zoomOut: () => applyDesktopCssZoom("out"),
+    resetZoom: () => applyDesktopCssZoom("reset"),
+    setLanguage: (next) => {
+      void config.getConfiguration("grok").update(LANGUAGE_SETTING, next);
+    },
+  };
+  const rebuildDesktopMenu = (): void => {
+    Menu.setApplicationMenu(
+      buildDesktopAppMenu(desktopMenuActions, {
         isPackaged,
         locale: localeFromConfig(
           config.getConfiguration("grok").get("language", "en"),
         ),
-      },
-    ),
-  );
+      }),
+    );
+  };
+  rebuildDesktopMenu();
+  // Keep the menu bar in sync when the locale changes from anywhere
+  // (this switcher, or the Settings panel inside the webview).
+  config.onDidChange((e) => {
+    if (e.affectsConfiguration("grok.language")) rebuildDesktopMenu();
+  });
 
   // Round icon first — same one the installers use, so a dev run and an
   // installed build look identical in the taskbar and dock. Falls back to the
