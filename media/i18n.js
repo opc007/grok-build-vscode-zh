@@ -152,7 +152,8 @@
     "chat.session.deleteActiveBody": "This is the conversation you have open. It will close and a new one will start in the same project.",
     "chat.session.renameTitle": "Rename session",
     "chat.session.namePlaceholder": "Session name",
-    "chat.session.untitled": "Untitled"
+    "chat.session.untitled": "Untitled",
+    "chat.resize.dragToResize": "Drag to resize"
   };
 
   var data = (root && root.__I18N) || { locale: "en", dict: {} };

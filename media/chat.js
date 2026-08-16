@@ -3016,8 +3016,8 @@
       btn.id = "rail-gear-btn";
       btn.type = "button";
       btn.className = "rail-icon-btn";
-      btn.title = "Settings";
-      btn.setAttribute("aria-label", "Settings");
+      btn.title = window.t("chat.composer.settings");
+      btn.setAttribute("aria-label", window.t("chat.composer.settings"));
       // Leftmost in the footer on BOTH hosts. Anchoring it to the theme toggle
       // instead only worked on desktop — the browser client's toggle carries no
       // id, so the gear was appended and landed on the opposite side. First
@@ -3027,8 +3027,8 @@
     if (!btn.dataset.railGearWired) {
       btn.dataset.railGearWired = "1";
       btn.innerHTML = ICON.gear;
-      btn.title = "Settings";
-      btn.setAttribute("aria-label", "Settings");
+      btn.title = window.t("chat.composer.settings");
+      btn.setAttribute("aria-label", window.t("chat.composer.settings"));
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
         openGearPopover(btn);
@@ -3284,7 +3284,7 @@
       handle.setAttribute("role", "separator");
       handle.setAttribute("aria-orientation", "vertical");
       handle.setAttribute("aria-label", "Resize projects rail");
-      handle.title = "Drag to resize";
+      handle.title = window.t("chat.resize.dragToResize");
       rail.parentElement.insertBefore(handle, rail.nextSibling);
     }
     if (!railResizerWired) {
@@ -10709,7 +10709,7 @@
     modeBtn.title = modeButtonTitle(state.currentModeId);
     if (!state.busy) {
       sendBtn.innerHTML = ICON.arrowUp;
-      sendBtn.title = "Send";
+      sendBtn.title = window.t("chat.composer.send");
       sendBtn.disabled = false;
     } else if (state.busyLocked) {
       sendBtn.innerHTML = ICON.spinner;

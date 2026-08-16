@@ -181,6 +181,7 @@ export const en: Record<string, string> = {
   "chat.session.renameTitle": "Rename session",
   "chat.session.namePlaceholder": "Session name",
   "chat.session.untitled": "Untitled",
+  "chat.resize.dragToResize": "Drag to resize",
 
   // ----- desktop application menu -----
   "menu.file": "File",
@@ -340,6 +341,7 @@ export const zhCN: Record<string, string> = {
   "chat.session.renameTitle": "重命名会话",
   "chat.session.namePlaceholder": "会话名称",
   "chat.session.untitled": "未命名",
+  "chat.resize.dragToResize": "拖动以调整大小",
 
   "menu.file": "文件",
   "menu.file.addProjectFolder": "添加项目文件夹…",
