@@ -14210,6 +14210,11 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
    */
   private getProjectsRailHtml(webview: HostWebview): string {
     const nonce = getNonce();
+    const loc = this.activeLocale();
+    const lt: (key: string, vars?: Record<string, string | number>) => string = (
+      key,
+      vars
+    ) => t(loc, key, vars);
     const mediaUri = (file: string) =>
       webview.asWebviewUri(Uri.joinPath(this.context.extensionUri, "media", file));
     return `<!DOCTYPE html>
@@ -14226,7 +14231,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       <span class="rail-search-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       </span>
-      <input id="rail-search" class="rail-search" type="search" placeholder="Filter projects…" autocomplete="off" spellcheck="false" aria-label="Filter projects" />
+      <input id="rail-search" class="rail-search" type="search" placeholder="${lt("chat.rail.filterProjects")}" autocomplete="off" spellcheck="false" aria-label="${lt("chat.rail.filterProjects")}" />
     </div>
     <div id="rail-scroll" class="rail-scroll"></div>
   </aside>
@@ -14430,7 +14435,7 @@ ${many ? `${working.length} conversations are` : "A conversation is"} still work
       <span class="rail-search-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       </span>
-      <input id="rail-search" class="rail-search" type="search" placeholder="Filter projects…" autocomplete="off" spellcheck="false" aria-label="Filter projects" />
+      <input id="rail-search" class="rail-search" type="search" placeholder="${lt("chat.rail.filterProjects")}" autocomplete="off" spellcheck="false" aria-label="${lt("chat.rail.filterProjects")}" />
     </div>
     <div id="rail-scroll" class="rail-scroll"></div>
     <div class="rail-foot">

@@ -264,8 +264,8 @@
   const GROK_ACTIVITY_VERB = "Grokking";
   const CODEX_ACTIVITY_VERB = "Opening AI";
   const COMPOSER_PLACEHOLDER = {
-    grok: "Ask Grok\u2026",
-    codex: "Ask GPT\u2026",
+    grok: "chat.input.placeholder.grok",
+    codex: "chat.input.placeholder.codex",
   };
   const EFFORT_TOOLTIPS = {
     none: "None — no extra reasoning",
@@ -5192,20 +5192,20 @@
 
     if (!shownAnything) {
       if (!state.reposKnown && desktopLargeLayout()) {
-        root.appendChild(railNote("Loading…"));
+        root.appendChild(railNote(window.t("chat.rail.loading")));
       } else if (!q && canAddProjectFolder()) {
         // An empty rail that only says "No projects yet" is a dead end on the
         // one screen where the user has nothing else to click.
-        const empty = railNote("No projects yet");
+        const empty = railNote(window.t("chat.rail.noProjects"));
         const add = document.createElement("button");
         add.type = "button";
         add.className = "rail-empty-action";
-        add.textContent = "Add a project folder";
+        add.textContent = window.t("chat.rail.addProjectFolder");
         add.onclick = () => vscode.postMessage({ type: "addProjectFolder" });
         empty.appendChild(add);
         root.appendChild(empty);
       } else {
-        root.appendChild(railNote(q ? "No matches." : "No projects yet"));
+        root.appendChild(railNote(q ? window.t("chat.rail.noMatches") : window.t("chat.rail.noProjects")));
       }
     }
 
@@ -9413,7 +9413,7 @@
   }
 
   function syncProviderVoice() {
-    input.placeholder = COMPOSER_PLACEHOLDER[state.activeProvider] || COMPOSER_PLACEHOLDER.grok;
+    input.placeholder = window.t(COMPOSER_PLACEHOLDER[state.activeProvider] || COMPOSER_PLACEHOLDER.grok);
     if (!state.grokkingEl) return;
     const label = state.grokkingEl.querySelector(".grokking-label");
     if (label) label.textContent = state.activeProvider === "codex" ? CODEX_ACTIVITY_VERB : GROK_ACTIVITY_VERB;
@@ -11369,15 +11369,15 @@
     hdr.className = "queued-hdr";
     const tag = document.createElement("span");
     tag.className = "queued-tag";
-    tag.innerHTML = `${ICON.clock}<span>${state.queuedSubmissionRejected || rejected ? "Not sent" : "Queued"}</span>`;
+    tag.innerHTML = `${ICON.clock}<span>${state.queuedSubmissionRejected || rejected ? window.t("chat.queued.tag.notSent") : window.t("chat.queued.tag.queued")}</span>`;
     tag.title = state.queuedSubmissionRejected || rejected
-      ? "The relay rejected this prompt. Edit it to retry, or remove it."
-      : "Sends when Grok finishes";
+      ? window.t("chat.queued.title.rejected")
+      : window.t("chat.queued.title.queued");
     const actions = document.createElement("span");
     actions.className = "queued-actions";
     const editBtn = document.createElement("button");
     editBtn.className = "queued-action";
-    editBtn.title = "Edit — back to the composer";
+    editBtn.title = window.t("chat.queued.action.edit");
     editBtn.innerHTML = ICON.pencil;
     // pointerdown for the same reason as Steer below — this whole block moves
     // under the cursor while the agent streams.
@@ -11396,7 +11396,7 @@
     };
     const rmBtn = document.createElement("button");
     rmBtn.className = "queued-action";
-    rmBtn.title = "Remove from queue";
+    rmBtn.title = window.t("chat.queued.action.remove");
     rmBtn.innerHTML = ICON.x;
     rmBtn.onpointerdown = (e) => {
       e.preventDefault();
@@ -11415,8 +11415,8 @@
     if (state.steerSupported) {
       const steerBtn = document.createElement("button");
       steerBtn.className = "queued-action queued-steer";
-      steerBtn.title = "Steer — submit now without interrupting Grok";
-      steerBtn.innerHTML = `${ICON.cornerDownRight}<span>Steer</span>`;
+      steerBtn.title = window.t("chat.queued.action.steer");
+      steerBtn.innerHTML = `${ICON.cornerDownRight}<span>${window.t("chat.queued.action.steerLabel")}</span>`;
       // pointerdown, NOT click: the queued block is pinned to the end of the
       // chat and every streamed chunk runs scrollToBottom, so while the agent is
       // writing prose the button shifts under the cursor between mousedown and
