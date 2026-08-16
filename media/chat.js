@@ -3843,13 +3843,13 @@
         // A worktree session gets a branch icon (a TYPE marker in muted gray,
         // off the status-dot palette), not a "(WT)" text prefix like a fork's
         // "(Fork)" — it's an isolated checkout, not a renamed conversation.
-        let displayName = s.displayName || "Untitled";
+        let displayName = s.displayName || window.t("chat.session.untitled");
         if (s.worktreeLabel) {
-          if (displayName.startsWith("(WT)")) displayName = displayName.slice(4).trim() || "Worktree";
+          if (displayName.startsWith("(WT)")) displayName = displayName.slice(4).trim() || window.t("chat.session.worktree");
           const branch = document.createElement("span");
           branch.className = "history-row-branch";
           branch.innerHTML = ICON.gitBranch;
-          branch.title = "Worktree: " + s.worktreeLabel;
+          branch.title = window.t("chat.session.worktreeTitle", { label: s.worktreeLabel });
           name.appendChild(branch);
         }
         const txt = document.createElement("span");
@@ -3890,9 +3890,9 @@
       if (s.worktreeLabel && !IS_REMOTE) {
         renameBtn.disabled = true;
         renameBtn.classList.add("disabled");
-        renameBtn.title = "Worktree name is fixed to the checkout";
+        renameBtn.title = window.t("chat.session.worktreeFixed");
       } else {
-        renameBtn.title = "Rename";
+        renameBtn.title = window.t("common.rename");
         renameBtn.onclick = (e) => {
           e.stopPropagation();
           state.renamingSessionId = s.id;
@@ -3909,13 +3909,13 @@
       const delBtn = document.createElement("button");
       delBtn.className = "history-action-btn history-action-danger";
       delBtn.innerHTML = ICON.trash;
-      delBtn.title = "Delete";
+      delBtn.title = window.t("common.delete");
       delBtn.onclick = (e) => {
         e.stopPropagation();
         uiConfirm({
-          title: s.displayName ? `Delete "${s.displayName}"?` : "Delete this session?",
+          title: s.displayName ? window.t("chat.session.deleteTitle", { name: s.displayName }) : window.t("chat.session.deleteThis"),
           body: deleteSessionWarning(active),
-          confirmLabel: "Delete",
+          confirmLabel: window.t("common.delete"),
           danger: true,
         }).then((ok) => { if (ok) vscode.postMessage({ type: "deleteSession", id: s.id, name: s.displayName }); });
       };
@@ -4093,7 +4093,7 @@
   /** Palette the host accepts — keep ids in lockstep with REPO_COLOR_IDS in
    *  sessions.ts. Labels are accessible names for each swatch. */
   const REPO_COLOR_SWATCHES = [
-    { id: "", label: "None" },
+    { id: "", label: window.t("common.none") },
     { id: "blue", label: "Blue" },
     { id: "teal", label: "Teal" },
     { id: "green", label: "Green" },
@@ -6182,8 +6182,8 @@
       branch.title = "Worktree: " + s.worktreeLabel;
       row.appendChild(branch);
     }
-    let name = s.displayName || "Untitled";
-    if (s.worktreeLabel && name.startsWith("(WT)")) name = name.slice(4).trim() || "Worktree";
+    let name = s.displayName || window.t("chat.session.untitled");
+    if (s.worktreeLabel && name.startsWith("(WT)")) name = name.slice(4).trim() || window.t("chat.session.worktree");
     label.textContent = name;
     row.appendChild(label);
 
@@ -6403,20 +6403,19 @@
    *  and something else takes its place — so the dialog says so before you agree
    *  to it, and says the extra part out loud when a turn is still running. */
   function deleteSessionWarning(active) {
-    if (!active) return "This cannot be undone.";
-    const stopping = state.busy ? " Grok is still working; that stops." : "";
-    return "This is the conversation you have open. It will close and a new one will start in the same project."
-      + stopping + " This cannot be undone.";
+    if (!active) return window.t("chat.session.cannotUndo");
+    const stopping = state.busy ? " " + window.t("chat.session.stopping") : "";
+    return window.t("chat.session.deleteActiveBody") + stopping + " " + window.t("chat.session.cannotUndo");
   }
 
   /** Rename from the rail. The history popover renames inline in its own row;
    *  out here there is no row to hand over to, so ask for the name directly. */
   function railRenameSession(s, cwd) {
     uiPrompt({
-      title: "Rename session",
+      title: window.t("chat.session.renameTitle"),
       value: s.displayName || "",
-      placeholder: "Session name",
-      confirmLabel: "Rename",
+      placeholder: window.t("chat.session.namePlaceholder"),
+      confirmLabel: window.t("common.rename"),
     }).then((name) => {
       const next = (name || "").trim();
       if (!next || next === s.displayName) return;

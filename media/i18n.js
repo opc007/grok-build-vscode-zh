@@ -137,7 +137,22 @@
     "chat.history.clearAll": "Clear all history",
     "chat.history.clearAllTitle": "Delete all sessions in this repository's history",
     "chat.history.clearTitle": "Clear history for “{repo}”?",
-    "common.deleteAll": "Delete All"
+    "common.deleteAll": "Delete All",
+    "common.rename": "Rename",
+    "common.delete": "Delete",
+    "common.none": "None",
+
+    "chat.session.worktree": "Worktree",
+    "chat.session.worktreeTitle": "Worktree: {label}",
+    "chat.session.worktreeFixed": "Worktree name is fixed to the checkout",
+    "chat.session.deleteTitle": "Delete “{name}”?",
+    "chat.session.deleteThis": "Delete this session?",
+    "chat.session.cannotUndo": "This cannot be undone.",
+    "chat.session.stopping": "Grok is still working; that stops.",
+    "chat.session.deleteActiveBody": "This is the conversation you have open. It will close and a new one will start in the same project.",
+    "chat.session.renameTitle": "Rename session",
+    "chat.session.namePlaceholder": "Session name",
+    "chat.session.untitled": "Untitled"
   };
 
   var data = (root && root.__I18N) || { locale: "en", dict: {} };
