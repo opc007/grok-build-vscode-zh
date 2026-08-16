@@ -108,7 +108,36 @@
     "chat.empty.noRepositories": "No repositories with Grok sessions.",
     "chat.update.restartNow": "Restart now",
     "chat.update.openReleasePage": "Open release page",
-    "chat.update.notNow": "Not now"
+    "chat.update.notNow": "Not now",
+
+    "chat.mode.agentMode": "Agent mode",
+    "chat.mode.planMode": "Plan mode",
+    "chat.mode.agent.desc": "Grok acts directly, asking approval only for changes it judges sensitive",
+    "chat.mode.plan.desc": "Grok explores and proposes a plan; file writes and commands are blocked until you approve it",
+    "chat.mode.yolo.desc": "Grok automatically approves all permission requests (YOLO)",
+    "chat.mode.availableWhenReady": "available once the session is ready",
+
+    "afkpilot.title": "How AFK Pilot works",
+    "afkpilot.step1": "Link this device. Sign in with your account.",
+    "afkpilot.step2Desktop": "Keep this app open.",
+    "afkpilot.step2Editor": "Keep VS Code, Cursor, or Antigravity open.",
+    "afkpilot.copyUrl": "Copy afkpilot.com",
+    "afkpilot.note": "You can then work 100% remotely — it keeps this device awake, and never stores your prompts or code.",
+    "afkpilot.moreFaq": "More & FAQ",
+    "afkpilot.openPrefix": "Open",
+    "afkpilot.openSuffix": "on your phone and sign in.",
+
+    "chat.repo.live": "Live",
+    "chat.repo.unavailable": "Unavailable",
+    "chat.repo.loadingTitle": "Loading conversation... repository switching is disabled until it finishes.",
+    "chat.repo.browsing": "Browsing {selected}; live session is in {active}",
+
+    "chat.history.loading": "Loading…",
+    "chat.history.searchPlaceholder": "Search sessions…",
+    "chat.history.clearAll": "Clear all history",
+    "chat.history.clearAllTitle": "Delete all sessions in this repository's history",
+    "chat.history.clearTitle": "Clear history for “{repo}”?",
+    "common.deleteAll": "Delete All"
   };
 
   var data = (root && root.__I18N) || { locale: "en", dict: {} };

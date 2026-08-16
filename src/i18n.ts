@@ -133,6 +133,39 @@ export const en: Record<string, string> = {
   "chat.update.openReleasePage": "Open release page",
   "chat.update.notNow": "Not now",
 
+  // ----- chat mode picker -----
+  "chat.mode.agentMode": "Agent mode",
+  "chat.mode.planMode": "Plan mode",
+  "chat.mode.agent.desc": "Grok acts directly, asking approval only for changes it judges sensitive",
+  "chat.mode.plan.desc": "Grok explores and proposes a plan; file writes and commands are blocked until you approve it",
+  "chat.mode.yolo.desc": "Grok automatically approves all permission requests (YOLO)",
+  "chat.mode.availableWhenReady": "available once the session is ready",
+
+  // ----- AFK Pilot explainer dialog -----
+  "afkpilot.title": "How AFK Pilot works",
+  "afkpilot.step1": "Link this device. Sign in with your account.",
+  "afkpilot.step2Desktop": "Keep this app open.",
+  "afkpilot.step2Editor": "Keep VS Code, Cursor, or Antigravity open.",
+  "afkpilot.copyUrl": "Copy afkpilot.com",
+  "afkpilot.note": "You can then work 100% remotely — it keeps this device awake, and never stores your prompts or code.",
+  "afkpilot.moreFaq": "More & FAQ",
+  "afkpilot.openPrefix": "Open",
+  "afkpilot.openSuffix": "on your phone and sign in.",
+
+  // ----- repo / session panel -----
+  "chat.repo.live": "Live",
+  "chat.repo.unavailable": "Unavailable",
+  "chat.repo.loadingTitle": "Loading conversation... repository switching is disabled until it finishes.",
+  "chat.repo.browsing": "Browsing {selected}; live session is in {active}",
+
+  // ----- session history panel -----
+  "chat.history.loading": "Loading…",
+  "chat.history.searchPlaceholder": "Search sessions…",
+  "chat.history.clearAll": "Clear all history",
+  "chat.history.clearAllTitle": "Delete all sessions in this repository's history",
+  "chat.history.clearTitle": "Clear history for “{repo}”?",
+  "common.deleteAll": "Delete All",
+
   // ----- desktop application menu -----
   "menu.file": "File",
   "menu.file.addProjectFolder": "Add Project Folder…",
@@ -247,6 +280,35 @@ export const zhCN: Record<string, string> = {
   "chat.update.restartNow": "立即重启",
   "chat.update.openReleasePage": "打开发布页",
   "chat.update.notNow": "暂不",
+
+  "chat.mode.agentMode": "智能体模式",
+  "chat.mode.planMode": "计划模式",
+  "chat.mode.agent.desc": "Grok 直接行动，仅对认为敏感的操作请求批准",
+  "chat.mode.plan.desc": "Grok 探索并提出计划；在您批准前，文件写入和命令均被阻止",
+  "chat.mode.yolo.desc": "Grok 自动批准所有权限请求（YOLO）",
+  "chat.mode.availableWhenReady": "会话就绪后可用",
+
+  "afkpilot.title": "AFK Pilot 的工作原理",
+  "afkpilot.step1": "关联此设备。使用你的账户登录。",
+  "afkpilot.step2Desktop": "保持此应用打开。",
+  "afkpilot.step2Editor": "保持 VS Code、Cursor 或 Antigravity 打开。",
+  "afkpilot.copyUrl": "复制 afkpilot.com",
+  "afkpilot.note": "之后你即可 100% 远程工作 —— 它会保持此设备唤醒，且绝不会存储你的提示词或代码。",
+  "afkpilot.moreFaq": "更多与常见问题",
+  "afkpilot.openPrefix": "打开",
+  "afkpilot.openSuffix": "，然后在手机上登录。",
+
+  "chat.repo.live": "进行中",
+  "chat.repo.unavailable": "不可用",
+  "chat.repo.loadingTitle": "正在加载对话……在加载完成前无法切换仓库。",
+  "chat.repo.browsing": "正在浏览 {selected}；实时会话位于 {active}",
+
+  "chat.history.loading": "加载中…",
+  "chat.history.searchPlaceholder": "搜索会话…",
+  "chat.history.clearAll": "清除全部历史",
+  "chat.history.clearAllTitle": "删除此仓库历史中的所有会话",
+  "chat.history.clearTitle": "清除“{repo}”的历史？",
+  "common.deleteAll": "删除全部",
 
   "menu.file": "文件",
   "menu.file.addProjectFolder": "添加项目文件夹…",

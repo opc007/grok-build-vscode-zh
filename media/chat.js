@@ -757,18 +757,18 @@
   const MODE_META = {
     agent: {
       icon: ICON.bot,
-      label: "Agent mode",
-      desc: "Grok acts directly, asking approval only for changes it judges sensitive",
+      label: window.t("chat.mode.agentMode"),
+      desc: window.t("chat.mode.agent.desc"),
     },
     plan: {
       icon: ICON.listTree,
-      label: "Plan mode",
-      desc: "Grok explores and proposes a plan; file writes and commands are blocked until you approve it",
+      label: window.t("chat.mode.planMode"),
+      desc: window.t("chat.mode.plan.desc"),
     },
     yolo: {
       icon: ICON.zap,
-      label: "Auto accept",
-      desc: "Grok automatically approves all permission requests (YOLO)",
+      label: window.t("chat.mode.autoAccept"),
+      desc: window.t("chat.mode.yolo.desc"),
     },
   };
 
@@ -979,9 +979,9 @@
   // the tooltip can never name a different mode than the icon is showing.
   function modeButtonTitle(modeId) {
     const meta = MODE_META[modeId] || MODE_META.agent;
-    if (state.busyLocked) return `${meta.label} — available once the session is ready`;
-    if (!state.planModeAvailable) return `${meta.label} — Pick mode — ${state.planModeUnavailableReason}`;
-    return `${meta.label} — Pick mode`;
+    if (state.busyLocked) return `${meta.label} — ${window.t("chat.mode.availableWhenReady")}`;
+    if (!state.planModeAvailable) return `${meta.label} — ${window.t("chat.mode.pick")} — ${state.planModeUnavailableReason}`;
+    return `${meta.label} — ${window.t("chat.mode.pick")}`;
   }
 
   function updateModeBtn(modeId) {
@@ -2466,37 +2466,37 @@
     closeBtn.type = "button";
     closeBtn.className = "remote-explainer-close";
     closeBtn.innerHTML = ICON.x;
-    closeBtn.title = "Close";
-    closeBtn.setAttribute("aria-label", "Close");
+    closeBtn.title = window.t("common.close");
+    closeBtn.setAttribute("aria-label", window.t("common.close"));
 
     const title = document.createElement("div");
     title.className = "confirm-title";
-    title.textContent = "How AFK Pilot works";
+    title.textContent = window.t("afkpilot.title");
 
     const body = document.createElement("div");
     body.className = "confirm-body remote-explainer-body";
     const steps = document.createElement("ol");
     const step1 = document.createElement("li");
-    step1.textContent = "Link this device. Sign in with your account.";
+    step1.textContent = window.t("afkpilot.step1");
     const step2 = document.createElement("li");
     step2.textContent = isDesktopHostCaps()
-      ? "Keep this app open."
-      : "Keep VS Code, Cursor, or Antigravity open.";
+      ? window.t("afkpilot.step2Desktop")
+      : window.t("afkpilot.step2Editor");
     const step3 = document.createElement("li");
-    step3.append("Open ");
+    step3.append(window.t("afkpilot.openPrefix") + " ");
     const urlBtn = document.createElement("button");
     urlBtn.type = "button";
     urlBtn.className = "remote-url-copy";
     urlBtn.textContent = "afkpilot.com";
-    urlBtn.title = "Copy afkpilot.com";
+    urlBtn.title = window.t("afkpilot.copyUrl");
     const copied = document.createElement("span");
     copied.className = "remote-url-copied";
     copied.setAttribute("aria-live", "polite");
-    step3.append(urlBtn, copied, " on your phone and sign in.");
+    step3.append(urlBtn, copied, " " + window.t("afkpilot.openSuffix"));
     steps.append(step1, step2, step3);
 
     const note = document.createElement("p");
-    note.textContent = "You can then work 100% remotely — it keeps this device awake, and never stores your prompts or code.";
+    note.textContent = window.t("afkpilot.note");
     body.append(steps, note);
 
     const actions = document.createElement("div");
@@ -2504,7 +2504,7 @@
     const moreBtn = document.createElement("button");
     moreBtn.type = "button";
     moreBtn.className = "confirm-btn confirm-primary";
-    moreBtn.textContent = "More & FAQ";
+    moreBtn.textContent = window.t("afkpilot.moreFaq");
     actions.appendChild(moreBtn);
 
     const done = () => {
@@ -2527,10 +2527,10 @@
     };
     urlBtn.onclick = (e) => {
       e.stopPropagation();
-      navigator.clipboard.writeText("https://afkpilot.com").then(() => {
-        copied.textContent = "Copied";
-        urlBtn.classList.add("copied");
-      }).catch(() => {});
+        navigator.clipboard.writeText("https://afkpilot.com").then(() => {
+          copied.textContent = window.t("chat.action.copied");
+          urlBtn.classList.add("copied");
+        }).catch(() => {});
     };
     moreBtn.onclick = (e) => {
       e.stopPropagation();
@@ -3569,10 +3569,10 @@
       `<span class="repo-chip-label"></span>${ICON.chevronDown}`;
     repoBtn.querySelector(".repo-chip-label").textContent = label;
     repoBtn.title = locked
-      ? "Loading conversation... repository switching is disabled until it finishes."
+      ? window.t("chat.repo.loadingTitle")
       : browsing
-        ? `Browsing ${state.selectedRepoCwd}; live session is in ${state.activeRepoCwd}`
-        : (state.selectedRepoCwd || "Choose repository");
+        ? window.t("chat.repo.browsing", { selected: state.selectedRepoCwd, active: state.activeRepoCwd })
+        : (state.selectedRepoCwd || window.t("chat.composer.chooseRepository"));
   }
 
   function renderRepoPopover() {
@@ -3601,8 +3601,8 @@
       main.querySelector(".repo-row-name").textContent = repo.label || cwdLeaf(repo.cwd);
       const meta = main.querySelector(".repo-row-meta");
       meta.textContent = repo.available
-        ? [repo.worktreeLabel, live ? "Live" : ""].filter(Boolean).join(" · ")
-        : "Unavailable";
+        ? [repo.worktreeLabel, live ? window.t("chat.repo.live") : ""].filter(Boolean).join(" · ")
+        : window.t("chat.repo.unavailable");
       main.onclick = (e) => {
         e.stopPropagation();
         if (!repo.available || repoSwitcherLocked()) return;
@@ -3670,7 +3670,7 @@
       const more = list.querySelector(".history-more");
       if (more) {
         more.disabled = true;
-        more.textContent = "Loading…";
+        more.textContent = window.t("chat.history.loading");
       }
     }
   }
@@ -3683,7 +3683,7 @@
     const search = document.createElement("input");
     search.type = "text";
     search.className = "history-search";
-    search.placeholder = "Search sessions…";
+    search.placeholder = window.t("chat.history.searchPlaceholder");
     search.value = state.sessionSearch;
     search.oninput = () => {
       state.sessionSearch = search.value;
@@ -3718,8 +3718,8 @@
     footer.hidden = true;
     const clearBtn = document.createElement("button");
     clearBtn.className = "history-clear-all";
-    clearBtn.innerHTML = ICON.trash + "<span>Clear all history</span>";
-    clearBtn.title = "Delete all sessions in this repository's history";
+    clearBtn.innerHTML = ICON.trash + `<span>${window.t("chat.history.clearAll")}</span>`;
+    clearBtn.title = window.t("chat.history.clearAllTitle");
     clearBtn.onclick = (e) => {
       e.stopPropagation();
       closePopovers();
@@ -3727,9 +3727,9 @@
       const repoLabel = repo?.label || cwdLeaf(state.selectedRepoCwd);
       const repoPath = repo?.cwd || state.selectedRepoCwd;
       uiConfirm({
-        title: `Clear history for “${repoLabel}”?`,
+        title: window.t("chat.history.clearTitle", { repo: repoLabel }),
         body: `Deletes every session for:\n${repoPath}\n\nThe current session is kept. This cannot be undone.`,
-        confirmLabel: "Delete All",
+        confirmLabel: window.t("common.deleteAll"),
         danger: true,
       }).then((ok) => {
         if (ok) vscode.postMessage({ type: "clearAllSessions", cwd: repoPath });
