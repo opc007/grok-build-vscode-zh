@@ -77,16 +77,16 @@
   function providerAction(provider) {
     const connected = provider.connected === true;
     const needsLogin = connected && provider.needsLogin === true;
-    if (needsLogin) return "Sign in again";
-    return connected ? "Sign out" : "Connect";
+    if (needsLogin) return window.t("settings.provider.signInAgain");
+    return connected ? window.t("settings.provider.signOut") : window.t("settings.provider.connect");
   }
 
   function providerDescription(provider) {
     const connected = provider.connected === true;
     const needsLogin = connected && provider.needsLogin === true;
-    if (needsLogin) return "This account is connected but needs to sign in again before it can be used.";
-    if (connected) return "This account is connected on this machine.";
-    return "Connect this account to use it for new conversations.";
+    if (needsLogin) return window.t("settings.provider.desc.connectedNeedsLogin");
+    if (connected) return window.t("settings.provider.desc.connected");
+    return window.t("settings.provider.desc.disconnected");
   }
 
   function logsLabel(env) {

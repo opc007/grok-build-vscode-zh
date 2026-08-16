@@ -2745,7 +2745,11 @@
       // action is the connect flow, not "Sign out" of credentials that are
       // already refused.
       const needsLogin = connected && provider.needsLogin === true;
-      const action = needsLogin ? "Sign in again" : connected ? "Sign out" : "Connect";
+      const action = needsLogin
+        ? window.t("settings.provider.signInAgain")
+        : connected
+          ? window.t("settings.provider.signOut")
+          : window.t("settings.provider.connect");
       const name = provider.id === "codex" ? "Codex" : "Grok";
       addGearItem(
         `<span class="gear-lead"><span class="provider-glyph provider-${provider.id}">${providerLogoMarkup(provider.id)}</span><span>${name}</span></span><span class="popover-ver${needsLogin ? " popover-warn" : ""}">${action}</span>`,
@@ -6799,8 +6803,8 @@
         `<div class="onb">` +
           `<p class="onb-heading">${window.t("chat.onb.codexLoginHeading")}</p>` +
           `<p class="onb-desc">${window.t("chat.onb.codexLoginDesc")}</p>` +
-          `<button class="onb-action onb-secondary" type="button" data-act="connectProvider" data-provider="codex">Open terminal &amp; run <code>codex login</code></button>` +
-          `<button class="onb-action" type="button" data-act="recheckProvider" data-provider="codex">Done - connect Codex</button>` +
+          `<button class="onb-action onb-secondary" type="button" data-act="connectProvider" data-provider="codex">${window.t("chat.onb.codexLoginBtn")}</button>` +
+          `<button class="onb-action" type="button" data-act="recheckProvider" data-provider="codex">${window.t("chat.onb.codexDoneBtn")}</button>` +
         `</div>`;
     } else if (mode === "auth-required") {
       if (ver) setWelcomeStatus(window.t("chat.status.authRequired"), false);
@@ -6808,15 +6812,15 @@
         `<div class="onb">` +
           `<p class="onb-heading">${window.t("chat.onb.authRequiredHeading")}</p>` +
           `<p class="onb-desc">${window.t("chat.onb.authRequiredDesc1")}</p>` +
-          `<button class="onb-action" type="button" data-act="runLogin">Open terminal &amp; run <code>grok login</code></button>` +
-          `<p class="onb-or">or</p>` +
+          `<button class="onb-action" type="button" data-act="runLogin">${window.t("chat.onb.grokLoginBtn")}</button>` +
+          `<p class="onb-or">${window.t("chat.onb.or")}</p>` +
           `<p class="onb-desc">${window.t("chat.onb.authRequiredApiDesc")}</p>` +
           `<div class="onb-cmd">` +
             `<code>XAI_API_KEY=your-key-here</code>` +
             `<button class="onb-copy" type="button" title="${window.t("chat.action.copy")}" data-cmd="XAI_API_KEY=">${ICON.copy}</button>` +
           `</div>` +
           `<p class="onb-desc">${window.t("chat.onb.authRequiredKeyNote")}</p>` +
-          `<button class="onb-action onb-secondary" type="button" data-act="recheckProvider" data-provider="grok">Re-check connection</button>` +
+          `<button class="onb-action onb-secondary" type="button" data-act="recheckProvider" data-provider="grok">${window.t("chat.onb.recheckConnection")}</button>` +
         `</div>`;
     } else {
       onb.innerHTML = "";
