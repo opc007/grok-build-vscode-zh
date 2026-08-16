@@ -16,6 +16,8 @@ Both speak JSON-RPC to `grok agent stdio`, share chat history under `~/.grok`, a
 
 No manual setup on either host: onboarding **walks you through installing the `grok` CLI and signing in** — with a **SuperGrok or X Premium+ subscription**, or an **xAI API key**.
 
+> 🌏 **简体中文界面已内置 / Simplified Chinese built in** — 可在 **设置 → 扩展 → Grok → Language** 选择「简体中文」，或在桌面版顶部菜单的 **语言** 中切换。下文提供 [中文版说明](#简体中文说明)。 / Switch the UI to Chinese in **Settings → Extensions → Grok → Language**, or the desktop menu's **Language** entry. A [Chinese translation](#简体中文说明) follows below.
+
 ![Grok Build in the VS Code sidebar, running Grok](docs/screenshots/grok_4.5.png)
 
 ![Grok Build Desktop — projects, the conversation with an image generated inline, and the file panel](docs/screenshots/grok-desktop.webp)
@@ -296,6 +298,7 @@ Details, build-from-source, and signing notes: **[docs/desktop.md](docs/desktop.
 | `grok.soundNotifications` | `false` | Play a short tone when Grok finishes a turn or errors — a rising chime for done, a lower tone for errors — but **only when the Grok panel isn't focused**, so it notifies you when you've stepped away. Toggle live from gear → Config & debug → **Sound notifications**. |
 | `grok.telemetry.enabled` | `true` | Send anonymous, privacy-first usage telemetry (see [Privacy](#privacy)). Also honors VS Code's global `telemetry.telemetryLevel`. |
 | `grok.chatFontScale` | `100` | Zoom for the chat panel only, as a percent (`150`, `200`, …). Scales the whole chat UI without rescaling the rest of VS Code (unlike `Ctrl/Cmd+Shift+=`). Applies live; supports User (global) and Workspace (local) scope. |
+| `grok.language` | `"en"` | **UI language** — `"en"` (English) or `"zh-CN"` (Simplified Chinese). Added by the zh-CN localization. Switch live from Settings → Extensions → Grok → Language, or the desktop menu's **Language** entry. |
 | `grok.voiceApiKey` | `""` | Optional override key for voice Speech-to-Text. Empty = reuse your `grok login` token automatically, else `GROK_VOICE_API_KEY` / `XAI_API_KEY` from the workspace `.env`. See [docs/voice-setup.md](docs/voice-setup.md). |
 | `grok.ffmpegPath` | `""` | Path to `ffmpeg` for microphone recording. Empty = use `ffmpeg` from `PATH`. |
 | `grok.voiceInputDevice` | `""` | Microphone device override. Empty = system default (Windows auto-detects the first DirectShow audio device). |
@@ -384,3 +387,135 @@ More: [docs/privacy.md](docs/privacy.md).
 ## License & attribution
 
 Licensed under the **Functional Source License, Version 1.1, MIT Future License (FSL-1.1-MIT)** — see [LICENSE](LICENSE). In short: use, modify, and redistribute freely for any purpose **except** offering a competing commercial product or service. Versions up to and including 1.8.1 were published under MIT and remain MIT. The copyright notice and license text must travel with all copies, including compiled builds — if you're reusing this project, see [docs/attribution.md](docs/attribution.md) for how to credit it properly.
+
+---
+
+## 简体中文说明
+
+> 本仓库是 **Grok Build（社区版）** 的**中文本地化版本**。应用界面已内置简体中文，可在 **设置 → 扩展 → Grok → Language** 选择「简体中文」，或在桌面版（Grok Build Desktop）顶部菜单的 **语言** 中切换。下方为中文版介绍；英文原版见上文。
+
+### 这是什么？
+
+Grok Build（社区版）是一个**图形界面（GUI）**，让你像用聊天工具一样驱动 **Grok Build CLI**（含 Grok 4.6 等模型）。它**与 SpaceXAI（原 xAI）无关，也未获其背书**。`Grok`、`Grok Build`、`xAI` 是 xAI 的商标，本项目仅用这些名称说明其兼容对象。
+
+它提供**两种使用方式**，底层都是同一套智能体界面，跑在 Grok Build CLI 之上：
+
+| | **VS Code 扩展** | **Grok Build 桌面版** |
+|---|---|---|
+| **是什么** | VS Code / Cursor 内的侧边栏聊天 | 独立的 Electron 桌面应用（无需编辑器） |
+| **怎么获取** | [VS Code 插件市场](https://marketplace.visualstudio.com/items?itemName=PawelHuryn.grok-vscode-phuryn) · [Open VSX](https://open-vsx.org/extension/PawelHuryn/grok-vscode-phuryn) | [GitHub Releases](https://github.com/phuryn/grok-build-vscode/releases) |
+| **适合谁** | 你本来就泡在编辑器里 | 你想把智能体当成独立窗口 |
+
+两者都通过 JSON-RPC 与 `grok agent stdio` 通信，在 `~/.grok` 下共享聊天历史，并支持通过 **[AFK Pilot](https://afkpilot.com)** 进行**远程控制**——一次配对后，即可在手机或任意浏览器里查看、批准、引导对话。可以把文件作为 `@` 上下文丢进去，运行**多个会话**，在对话中**直接生成图片与视频**，还能**语音输入**。
+
+两种宿主都无需手动配置：首次使用会**引导你安装 `grok` CLI 并完成登录**——使用 **SuperGrok 或 X Premium+ 订阅**，或一个 **xAI API key** 即可。
+
+### 为什么用这个？
+
+如果你常驻编辑器，**或**想要一个独立的智能体窗口，它就把 Grok Build 放进了一套可视化的工作流里：每次提案修改都有**差异预览**，可以把**打开的文件和选中内容作为上下文**，**并行会话**带状态点，**可恢复的历史**，**行内图片与视频**，以及**语音输入**。重活由 CLI 干，这些宿主只是你不想待在终端时的图形界面。
+
+#### 主要功能
+
+- **带差异预览的权限卡片**：Grok 提案修改时，点「open diff →」即可在原生差异编辑器里审阅整份文件，再选择「允许一次 / 始终允许」或「拒绝」。文件只有在你批准后才会写入。
+- **模式切换——Agent / Plan / 自动接受**：从底部工具栏切换，中途也能切；切到「自动接受」可不再逐个批准卡片。
+- **图片与视频生成**：输入 `/imagine <提示词>`（或 `/imagine-video <提示词>`），结果直接渲染在对话中。
+- **粘贴或附加图片**：`Ctrl+V` 截图、拖拽图片、或点「+」选图（png/jpg/gif/webp，最大 20 MiB），作为视觉输入发给 Grok。
+- **语音控制**：麦克风按钮通过 xAI 的语音转文字 API 实时听写；说「grok send」即可免手提交。
+- **文件 chips**：当前编辑器自动带上；在输入框输入 `@` 可添加文件，拖拽、右键菜单、快捷键均可。
+- **会话历史**：并行会话带状态点，可恢复、重命名、搜索、清空。
+- **排队或引导（Steer）**：Grok 干活时你也能打字，不会打断它。
+- **Fork 对话**：把对话分支到新会话，不改原对话、不动磁盘代码。
+- **Worktree 会话**：在 git worktree 中隔离代码修改。
+- **回退（Rewind）**：把对话（和文件）回滚到更早的点。
+- **深度研究 / 工作流进度**：实时进度卡，可暂停 / 继续 / 停止。
+- **上下文与费用**：查看窗口占用与每次对话的实际计费。
+- **子智能体**、**工具调用**、**数学 / LaTeX 渲染**、**Mermaid 图表**、**模型选择**、**推理强度**、**远程控制（AFK Pilot）** 等。
+
+### 环境要求
+
+- **VS Code** 1.106+（或同内核的兼容编辑器，如 Cursor 3.x）。
+- **Grok Build CLI**（`grok`），支持 macOS / Linux / Windows。
+- **登录**：SuperGrok 或 X Premium+ 订阅（`grok login`），或 xAI API key。
+- **语音控制**（可选）：登录后即可用，仅需安装 [`ffmpeg`](https://ffmpeg.org) 录音。
+
+### 安装
+
+#### VS Code / Cursor 扩展
+
+1. **安装扩展**：在 VS Code / Cursor 打开**扩展**（`Ctrl/Cmd+Shift+X`），搜索「Grok Build for VS Code (Community)」，或从 [VS Code 插件市场](https://marketplace.visualstudio.com/items?itemName=PawelHuryn.grok-vscode-phuryn) / [Open VSX](https://open-vsx.org/extension/PawelHuryn/grok-vscode-phuryn) 安装。
+2. **打开 Grok 并登录**：按 `Ctrl/Cmd+;`。侧边栏会**引导你安装 `grok` CLI 并完成登录**——每步一键，用你的 SuperGrok / X Premium+ 订阅或 xAI API key 即可。这就是全部安装过程。
+
+Grok 默认打开在**次要侧边栏**（右侧）。想换位置？齿轮 → **Config & debug** → **Move view** 一键迁移。
+
+#### Grok Build 桌面版
+
+独立的 macOS（Apple Silicon + Intel）与 Windows（x64）应用。界面与扩展一致，无需 VS Code。
+
+1. 从最新 [GitHub Release](https://github.com/phuryn/grok-build-vscode/releases) 下载对应安装包。
+2. 安装并打开，选择项目文件夹（File → Add Project Folder）。首次引导同样会安装 `grok` CLI 并登录。
+
+> 当前为**未签名构建**：macOS / Windows 首次打开会弹出安全警告，按系统提示「仍要打开 / 仍要运行」即可。
+
+### 快速开始
+
+1. **打开** Grok——VS Code 中按 `Ctrl/Cmd+;`（默认在次要侧边栏）；桌面版启动应用并添加项目文件夹。
+2. **输入提示词**回车。Grok 流式输出，思考时显示「Thinking…」一行。想看完整推理？在齿轮菜单 → *Config & debug* 打开「Show thinking traces」。
+3. **批准操作**：Grok 要写文件或跑命令时会弹出权限卡片——预览修改后选择「允许一次 / 始终允许 / 拒绝」。
+4. **选择模式**（Agent / Plan / 自动接受）、**模型**、**推理强度**。
+5. **随时恢复**：时钟图标列出本项目的过往会话。
+6. **切换中文（本版本新增）**：打开 **设置 → 扩展 → Grok → Language**，选择 **简体中文**；或在桌面版顶部菜单的 **语言** 中选择「简体中文」。整个界面（菜单 + 聊天）会立即切换。
+
+### 配置
+
+VS Code 设置中搜索「grok」可见全部 `grok.*` 配置项。常用项：
+
+| 设置 | 默认值 | 说明 |
+|---|---|---|
+| `grok.cliPath` | `""` | `grok` 可执行文件路径。空 = 自动发现。 |
+| `grok.defaultModel` | `""` | 新会话默认模型。 |
+| `grok.defaultEffort` | `""` | 推理强度（`none` / `minimal` / `low` / `medium` / `high` / `xhigh`）。 |
+| `grok.defaultMode` | `""` | 新会话默认模式（Agent / 自动接受；Plan 不记忆）。 |
+| `grok.showThinking` | `false` | 在对话中显示 Grok 的推理过程。 |
+| `grok.language` | `"en"` | **界面语言**：`en`（英文）或 `zh-CN`（简体中文）。本中文本地化版本新增。 |
+| `grok.soundNotifications` | `false` | Grok 完成一轮或出错时播放提示音。 |
+| `grok.telemetry.enabled` | `true` | 发送匿名、隐私优先的使用遥测。 |
+
+> 完整配置项见上方英文版「Configuration」折叠区。
+
+### 命令与快捷键
+
+| 命令 | 作用 |
+|---|---|
+| `Grok: Open` | 打开 Grok 侧边栏 |
+| `Grok: New Session` | 新建会话 |
+| `Grok: Compact Conversation` | 压缩当前会话以回收上下文 |
+| `Grok: Pick Model` | 打开模型选择器 |
+| `Grok: Toggle Plan / Agent Mode` | 打开模式选择器 |
+| `Grok: Send File` | 把文件加入输入框 |
+| `Grok: Log Out` | 退出 Grok CLI 登录 |
+
+| 快捷键 | 作用 |
+|---|---|
+| `Ctrl+;` / `Cmd+;` | 打开 Grok 侧边栏 |
+| `Alt+G` | 为当前文件插入 `@` 提及 |
+
+### 工作原理
+
+扩展刻意做得**很薄**：它通过 `grok agent stdio` 走 JSON-RPC，并渲染结果。会话、记忆、MCP、模型、工具执行都由 Grok 掌管；扩展负责文件读写、终端请求、差异预览、webview 界面——以及 **Plan 模式**的安全把关。详见 [docs/architecture.md](docs/architecture.md)。
+
+### 开发
+
+构建、测试与仓库规范见 [docs/development.md](docs/development.md)。
+
+### 已知限制
+
+- **差异预览语义**：原生编辑器根据 Grok 提供的替换区域与磁盘当前文件重建两侧全文；若文件不可读、过大或已移动，会安全回退到仅区域差异。写入仅在批准后发生。
+- **视图位置**：默认在次要侧边栏（需 VS Code 1.106+）。可随时用齿轮 → **Config & debug** → **Move view** 迁移。
+
+### 隐私
+
+**默认隐私优先**——消息内容、代码、文件路径都不会自动离开你的机器。唯一的自动上报是匿名的、可关闭的 `session_start`（用 `grok.telemetry.enabled: false` 关闭）。只有你显式开启的功能才会外发数据（语音输入、远程控制等）。详见 [docs/privacy.md](docs/privacy.md)。
+
+### 许可证与署名
+
+基于 **Functional Source License, Version 1.1, MIT Future License (FSL-1.1-MIT)** 授权——见 [LICENSE](LICENSE)。简而言之：可自由用于任何用途，**除了**提供竞争性的商业产品或服务。1.8.1 及之前版本以 MIT 发布，仍为 MIT。版权声明与许可文本须随所有副本（含编译产物）一并保留。本仓库在**保留原作者署名与 FSL 声明**的前提下，新增了简体中文界面本地化。
