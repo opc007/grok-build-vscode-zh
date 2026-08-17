@@ -47,6 +47,11 @@ export const en: Record<string, string> = {
   "settings.category.account": "Account",
   "settings.category.advanced": "Advanced",
   "settings.category.about": "About",
+  "settings.update.checking": "Checking for updates",
+  "settings.update.supported": "On the supported version",
+  "settings.update.checkFailed": "Couldn’t check — try updating anyway",
+  "settings.update.updateAvailable": "Update available · v{ver}",
+  "settings.update.upToDate": "CLI is up to date",
 
   // ----- settings rows -----
   "settings.language.title": "Language",
@@ -98,6 +103,12 @@ export const en: Record<string, string> = {
   "chat.composer.chooseRepository": "Choose repository",
   "chat.composer.continueRemotely": "Continue remotely",
   "chat.composer.scrollToBottom": "Scroll to bottom",
+  "chat.update.restartToUpdate": "Restart to update",
+  "chat.update.updateAvailable": "Update available",
+  "chat.update.downloadedTitle": "Version {ver} is downloaded — restart to install",
+  "chat.update.availableTitle": "Version {ver} is available",
+  "chat.update.restartAria": "Restart to update to version {ver}",
+  "chat.update.availableAria": "Update available: version {ver}",
   "chat.welcome.starting": "Starting",
   "chat.welcome.connectGrok": "Connect Grok",
   "chat.mode.pick": "Pick mode",
@@ -295,6 +306,7 @@ export const en: Record<string, string> = {
 
   // ----- gear / model picker (webview) -----
   "chat.gear.modelAndEffort": "Model and Effort",
+  "chat.gear.modelEffortSession": "Model, effort and session",
   "chat.gear.loadingSession": "Loading the session…",
   "chat.gear.clickToChange": "click to change",
   "chat.gear.effort.none": "None — no extra reasoning",
@@ -385,6 +397,8 @@ export const en: Record<string, string> = {
   "chat.rail.clearAllConfirm": "Clear all",
   "chat.rail.renameConversationTitle": "Rename conversation",
   "chat.rail.sessionActions": "Session actions",
+  "chat.rail.newSessionHere": "New session here",
+  "chat.rail.newSessionSwitch": "Switch to this project and start a new session",
 
   // ----- settings panel (webview) -----
   "settings.textSize.openInVSCodeDesc": "Chat zoom lives in VS Code settings so it can stay a user or workspace preference.",
@@ -466,6 +480,17 @@ export const en: Record<string, string> = {
   "filePanel.viewModeAria": "View mode",
   "filePanel.editFileTitle": "Edit file",
   "filePanel.cancelChangesTitle": "Cancel changes?",
+  "filePanel.openExternal": "Open in default app",
+  "filePanel.reload": "Reload",
+  "filePanel.overwrite": "Overwrite",
+  "filePanel.preview": "Preview",
+  "filePanel.editSource": "Edit source",
+  "filePanel.hideFilePanel": "Hide file panel",
+  "filePanel.showFilePanel": "Show file panel",
+  "filePanel.restore": "Restore",
+  "filePanel.maximize": "Maximize",
+  "filePanel.restoreFilePanel": "Restore file panel",
+  "filePanel.maximizeFilePanel": "Maximize file panel",
 
   // ----- native host UI (extension side) -----
   "chat.warn.startSessionFirst": "Start a session first.",
@@ -718,6 +743,11 @@ export const zhCN: Record<string, string> = {
   "settings.category.account": "账户",
   "settings.category.advanced": "高级",
   "settings.category.about": "关于",
+  "settings.update.checking": "正在检查更新",
+  "settings.update.supported": "已是最新支持的版本",
+  "settings.update.checkFailed": "无法检查 — 请尝试更新",
+  "settings.update.updateAvailable": "有可用更新 · v{ver}",
+  "settings.update.upToDate": "CLI 已是最新",
 
   "settings.language.title": "语言",
   "settings.language.description": "本应用的界面语言。Grok 仍然能理解任何语言的输入。",
@@ -766,6 +796,12 @@ export const zhCN: Record<string, string> = {
   "chat.composer.chooseRepository": "选择仓库",
   "chat.composer.continueRemotely": "远程继续",
   "chat.composer.scrollToBottom": "滚动到底部",
+  "chat.update.restartToUpdate": "重启以更新",
+  "chat.update.updateAvailable": "有可用更新",
+  "chat.update.downloadedTitle": "版本 {ver} 已下载 — 重启以安装",
+  "chat.update.availableTitle": "版本 {ver} 可用",
+  "chat.update.restartAria": "重启以更新到版本 {ver}",
+  "chat.update.availableAria": "有可用更新：版本 {ver}",
   "chat.welcome.starting": "正在启动",
   "chat.welcome.connectGrok": "连接 Grok",
   "chat.mode.pick": "选择模式",
@@ -953,6 +989,7 @@ export const zhCN: Record<string, string> = {
 
   // ----- gear / model picker (webview) -----
   "chat.gear.modelAndEffort": "模型与力度",
+  "chat.gear.modelEffortSession": "模型、力度与会话",
   "chat.gear.loadingSession": "正在加载会话…",
   "chat.gear.clickToChange": "点击切换",
   "chat.gear.effort.none": "无 — 不额外推理",
@@ -1043,6 +1080,8 @@ export const zhCN: Record<string, string> = {
   "chat.rail.clearAllConfirm": "清除全部",
   "chat.rail.renameConversationTitle": "重命名对话",
   "chat.rail.sessionActions": "会话操作",
+  "chat.rail.newSessionHere": "在此新建会话",
+  "chat.rail.newSessionSwitch": "切换到该项目并新建会话",
 
   // ----- settings panel (webview) -----
   "settings.textSize.openInVSCodeDesc": "聊天缩放位于 VS Code 设置中，以便保持为用户或工作区偏好。",
@@ -1124,6 +1163,17 @@ export const zhCN: Record<string, string> = {
   "filePanel.viewModeAria": "视图模式",
   "filePanel.editFileTitle": "编辑文件",
   "filePanel.cancelChangesTitle": "取消修改？",
+  "filePanel.openExternal": "在默认应用中打开",
+  "filePanel.reload": "重新加载",
+  "filePanel.overwrite": "覆盖",
+  "filePanel.preview": "预览",
+  "filePanel.editSource": "编辑源码",
+  "filePanel.hideFilePanel": "隐藏文件面板",
+  "filePanel.showFilePanel": "显示文件面板",
+  "filePanel.restore": "还原",
+  "filePanel.maximize": "最大化",
+  "filePanel.restoreFilePanel": "还原文件面板",
+  "filePanel.maximizeFilePanel": "最大化文件面板",
 
   // ----- native host UI (extension side) -----
   "chat.warn.startSessionFirst": "请先开始一个会话。",

@@ -14209,7 +14209,7 @@ ${detail}`,
     const mediaUri = (file: string) =>
       webview.asWebviewUri(Uri.joinPath(this.context.extensionUri, "media", file));
     return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${loc}">
 <head>
 <meta charset="UTF-8" />
 <meta http-equiv="Content-Security-Policy"
@@ -14226,6 +14226,8 @@ ${detail}`,
     </div>
     <div id="rail-scroll" class="rail-scroll"></div>
   </aside>
+  <script nonce="${nonce}">window.__I18N=${JSON.stringify({ locale: loc, dict: dictionaryFor(loc), locales: SUPPORTED_LOCALES })};</script>
+  <script nonce="${nonce}" src="${mediaUri("i18n.js")}"></script>
   <script nonce="${nonce}" src="${mediaUri("projects-rail.js")}"></script>
 </body>
 </html>`;
@@ -14287,6 +14289,7 @@ ${detail}`,
     opts: { remoteLinked: boolean; category?: string },
   ): string {
     const nonce = getNonce();
+    const loc = this.activeLocale();
     const mediaUri = (file: string) =>
       webview.asWebviewUri(Uri.joinPath(this.context.extensionUri, "media", file));
     const cfg = this.host.getConfiguration("grok");
@@ -14339,7 +14342,7 @@ ${detail}`,
     };
     const bootJson = JSON.stringify(boot).replace(/</g, "\\u003c");
     return `<!DOCTYPE html>
-<html lang="en" class="settings-page">
+<html lang="${loc}" class="settings-page">
 <head>
 <meta charset="UTF-8" />
 <meta http-equiv="Content-Security-Policy"
@@ -14350,6 +14353,8 @@ ${detail}`,
 <body class="settings-page">
   <div id="settings-root"></div>
   <script nonce="${nonce}">window.__grokSettingsBoot = ${bootJson};</script>
+  <script nonce="${nonce}">window.__I18N=${JSON.stringify({ locale: this.activeLocale(), dict: dictionaryFor(this.activeLocale()), locales: SUPPORTED_LOCALES })};</script>
+  <script nonce="${nonce}" src="${mediaUri("i18n.js")}"></script>
   <script nonce="${nonce}" src="${mediaUri("settings.js")}"></script>
   <script nonce="${nonce}">
     (function () {
@@ -14432,7 +14437,7 @@ ${detail}`,
     <div class="rail-foot">
       <div class="rail-user" aria-hidden="true"></div>
       <button id="rail-gear-btn" class="rail-icon-btn" type="button" title="${lt("chat.composer.settings")}" aria-label="${lt("chat.composer.settings")}" hidden></button>
-      <button id="desk-theme-toggle" class="rail-icon-btn" type="button" title="Toggle theme" aria-label="Toggle light and dark theme">
+      <button id="desk-theme-toggle" class="rail-icon-btn" type="button" title="${lt("chat.rail.toggleTheme")}" aria-label="${lt("chat.rail.toggleTheme")}">
         <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8"/></svg>
         <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.2 6.2 0 0 0 10.5 10.5z"/></svg>
       </button>
@@ -14471,7 +14476,7 @@ ${detail}`,
       : "";
 
     return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${loc}">
 <head>
 <meta charset="UTF-8" />
 <meta http-equiv="Content-Security-Policy"

@@ -1798,7 +1798,7 @@ describe("desktop DevTools gate (non-production only)", () => {
       path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "media", "settings.js"),
       "utf8",
     );
-    expect(settingsJs).toContain("Toggle Developer Tools");
+    expect(settingsJs).toContain('t("menu.view.toggleDevTools")');
     expect(settingsJs).toMatch(/type:\s*["']toggleDevTools["']/);
     // Launcher: explicit flag → env; not keyed off GROK_RELAY_URL.
     const launcher = fs.readFileSync(
@@ -2182,8 +2182,8 @@ describe("file-tree panel assets", () => {
     expect(filePanelJs).toContain("renderDirectory");
     expect(filePanelJs).toContain("openRowMenu");
     expect(filePanelJs).toContain('addEventListener("contextmenu"');
-    expect(filePanelJs).toContain('actionButton("Reload"');
-    expect(filePanelJs).toContain('actionButton("Overwrite"');
+    expect(filePanelJs).toContain('window.t("filePanel.reload")');
+    expect(filePanelJs).toContain('window.t("filePanel.overwrite")');
 
     // Desktop still owns its shell, rail collapse and shared width coordinator.
     expect(boot).toContain('document.querySelector(".app-main")');
@@ -3894,16 +3894,16 @@ describe("file-tree editing panel contract", () => {
     // actually gets. "Edit" is deliberately absent for Markdown: Edit source
     // already makes it editable, so a separate Edit would be a second control
     // for the thing you just did.
-    expect(src).toContain('"Preview"');
-    expect(src).toContain('"Edit source"');
+    expect(src).toContain('window.t("filePanel.preview")');
+    expect(src).toContain('window.t("filePanel.editSource")');
     expect(src).toContain('aria-label');
-    expect(src).toContain('"Save"');
+    expect(src).toContain('window.t("common.save")');
     expect(src).toContain('event.ctrlKey || event.metaKey');
     expect(src).toContain('event.preventDefault();');
-    expect(src).toContain('{ id: "discard", label: "Discard", danger: true }');
+    expect(src).toContain('label: window.t("common.discard")');
     expect(src).toContain('answer !== "discard"');
-    expect(src).toContain('actionButton("Reload"');
-    expect(src).toContain('"Overwrite"');
+    expect(src).toContain('actionButton(window.t("filePanel.reload")');
+    expect(src).toContain('window.t("filePanel.overwrite")');
     // The remote editor is the reference for editor state: Save advances the
     // baseline only to the captured payload, never to later textarea contents.
     expect(src).toContain("tab.baselineText = sentText");

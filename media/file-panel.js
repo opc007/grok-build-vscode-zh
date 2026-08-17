@@ -498,7 +498,7 @@
       open = !!next;
       rootEl.hidden = !open;
       toggle.setAttribute("aria-expanded", String(open));
-      toggle.title = open ? "Hide file panel" : "Show file panel";
+      toggle.title = open ? window.t("filePanel.hideFilePanel") : window.t("filePanel.showFilePanel");
       if (!open) setMaximized(false);
       applyPresentation();
       if (open && currentState && !currentState.tree) void loadRootTree();
@@ -508,8 +508,8 @@
     function paintMaximize() {
       if (!maximizeBtn) return;
       maximizeBtn.innerHTML = maximized ? ICON.restore : ICON.maximize;
-      maximizeBtn.title = maximized ? "Restore" : "Maximize";
-      maximizeBtn.setAttribute("aria-label", maximized ? "Restore file panel" : "Maximize file panel");
+      maximizeBtn.title = maximized ? window.t("filePanel.restore") : window.t("filePanel.maximize");
+      maximizeBtn.setAttribute("aria-label", maximized ? window.t("filePanel.restoreFilePanel") : window.t("filePanel.maximizeFilePanel"));
       maximizeBtn.setAttribute("aria-pressed", String(maximized));
     }
 
@@ -1449,7 +1449,7 @@
         // The desktop can still hand it to the OS — offered here, not done for
         // you, so the same click means the same thing on every client.
         if (tab.canOpenExternally && access.openExternal) {
-          const open = actionButton("Open in default app", "", () => {
+          const open = actionButton(window.t("filePanel.openExternal"), "", () => {
             void access.openExternal(tab.scopeId, tab.relPath);
           });
           open.classList.add("gfp-open-external");
@@ -1545,8 +1545,8 @@
             });
             return button;
           };
-          seg.appendChild(modeButton(ICON.preview, "Preview", "preview"));
-          seg.appendChild(modeButton(ICON.code, "Edit source", "code"));
+          seg.appendChild(modeButton(ICON.preview, window.t("filePanel.preview"), "preview"));
+          seg.appendChild(modeButton(ICON.code, window.t("filePanel.editSource"), "code"));
           head.appendChild(seg);
         } else if (!tab.editing) {
           const edit = actionButton("", "", () => {
@@ -1675,8 +1675,8 @@
     function renderConflictActions(tab) {
       const actions = doc.createElement("div");
       actions.className = "gfp-conflict-actions files-browse-conflict-actions";
-      const reload = actionButton("Reload", "", () => void reloadTab(tab));
-      const overwrite = actionButton("Overwrite", "danger", () => void overwriteTab(tab));
+      const reload = actionButton(window.t("filePanel.reload"), "", () => void reloadTab(tab));
+      const overwrite = actionButton(window.t("filePanel.overwrite"), "danger", () => void overwriteTab(tab));
       // Reload and Overwrite resolve the SAME conflict in opposite directions,
       // so running both is not a faster way to decide — it is a way to end up
       // with a panel that misreports the file. Click Reload, then Overwrite

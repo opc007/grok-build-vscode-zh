@@ -119,6 +119,14 @@ function buildMarketplaceReadme(githubReadme) {
     body = body.slice(0, dev) + body.slice(known);
   }
 
+  // Drop the bilingual README tail (## 简体中文说明 …) — the store listing is
+  // English-only; the Chinese section belongs on the GitHub README, and its
+  // desktop-app wording would trip the dual-host guard below.
+  const zhIdx = body.indexOf("## 简体中文说明");
+  if (zhIdx >= 0) {
+    body = body.slice(0, zhIdx).trimEnd() + "\n";
+  }
+
   // Strip dual-host install / quick-start wording if present in the body.
   body = body.replace(/\n### Grok Build Desktop[\s\S]*?(?=\n### |\n## )/m, "\n");
   body = body.replace(/\n### VS Code \/ Cursor extension\n\n/m, "\n");

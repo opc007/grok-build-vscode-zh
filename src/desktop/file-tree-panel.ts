@@ -205,8 +205,9 @@ export function fileTreePanelBootSource(_iconsDir?: string): string {
         railOpenButton.id = "desk-rail-open-btn";
         railOpenButton.className = "icon-btn desk-rail-open-btn";
         railOpenButton.innerHTML = shared.panelIcon("left");
-        railOpenButton.title = "Show projects";
-        railOpenButton.setAttribute("aria-label", "Show projects");
+        const railOpenTitle = (typeof window.t === "function") ? window.t("chat.rail.projectsShow") : "Show projects";
+        railOpenButton.title = railOpenTitle;
+        railOpenButton.setAttribute("aria-label", railOpenTitle);
         topBar.insertBefore(railOpenButton, topBar.firstChild);
       } else {
         railOpenButton.classList.add("icon-btn");

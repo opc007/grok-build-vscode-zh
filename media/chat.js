@@ -3079,13 +3079,13 @@
     const url = state.appUpdate.url;
     const ready = !!state.appUpdate.ready;
     btn.hidden = false;
-    btn.textContent = ready ? "Restart to update" : "Update available";
+    btn.textContent = ready ? window.t("chat.update.restartToUpdate") : window.t("chat.update.updateAvailable");
     btn.title = ready
-      ? `Version ${ver} is downloaded — restart to install`
-      : `Version ${ver} is available`;
+      ? window.t("chat.update.downloadedTitle", { ver })
+      : window.t("chat.update.availableTitle", { ver });
     btn.setAttribute(
       "aria-label",
-      ready ? `Restart to update to version ${ver}` : `Update available: version ${ver}`,
+      ready ? window.t("chat.update.restartAria", { ver }) : window.t("chat.update.availableAria", { ver }),
     );
     btn.setAttribute("aria-expanded", panel.hidden ? "false" : "true");
     if (!btn.dataset.wired) {
@@ -3367,7 +3367,7 @@
     const split = railGearLive();
     gearBtn.hidden = false;
     gearBtn.innerHTML = split ? ICON.settings2 : ICON.gear;
-    gearBtn.title = split ? "Model, effort and session" : "Settings";
+    gearBtn.title = split ? window.t("chat.gear.modelEffortSession") : window.t("chat.composer.settings");
     gearBtn.setAttribute("aria-label", gearBtn.title);
     if (railGear) railGear.hidden = !split;
   }
@@ -5917,7 +5917,7 @@
     add.type = "button";
     add.className = "rail-action-btn";
     add.innerHTML = ICON.plus;
-    add.title = selected ? "New session here" : "Switch to this project and start a new session";
+    add.title = selected ? window.t("chat.rail.newSessionHere") : window.t("chat.rail.newSessionSwitch");
     // Deliberately NOT gated on repoSwitcherLocked(). Starting a conversation is
     // the one thing that should always be available, and a lock that disables it
     // in EVERY project at once is indistinguishable from the app being broken —
@@ -6036,7 +6036,7 @@
       },
     ];
     const projectMenuKey = "repo:" + cwdKey(repo.cwd);
-    const projectMenuBtn = railMenuButton("Project actions", projectMenuItems, projectMenuKey);
+    const projectMenuBtn = railMenuButton(window.t("chat.rail.projectActions"), projectMenuItems, projectMenuKey);
     actions.appendChild(projectMenuBtn);
 
     head.appendChild(actions);

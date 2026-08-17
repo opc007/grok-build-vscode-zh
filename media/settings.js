@@ -152,11 +152,11 @@
 
   function grokUpdateStatusText(snapshot) {
     const u = grokUpdateOf(snapshot);
-    if (u.checking) return "Checking for updates";
-    if (grokUpdateBlocked(snapshot)) return "On the supported version";
-    if (u.error) return "Couldn’t check — try updating anyway";
-    if (u.updateAvailable) return "Update available · v" + (u.latest || "");
-    if (u.current || u.latest) return "CLI is up to date";
+    if (u.checking) return window.t("settings.update.checking");
+    if (grokUpdateBlocked(snapshot)) return window.t("settings.update.supported");
+    if (u.error) return window.t("settings.update.checkFailed");
+    if (u.updateAvailable) return window.t("settings.update.updateAvailable", { ver: u.latest || "" });
+    if (u.current || u.latest) return window.t("settings.update.upToDate");
     return "—";
   }
 

@@ -31,6 +31,11 @@
     "settings.category.account": "Account",
     "settings.category.advanced": "Advanced",
     "settings.category.about": "About",
+    "settings.update.checking": "Checking for updates",
+    "settings.update.supported": "On the supported version",
+    "settings.update.checkFailed": "Couldn’t check — try updating anyway",
+    "settings.update.updateAvailable": "Update available · v{ver}",
+    "settings.update.upToDate": "CLI is up to date",
 
     "settings.language.title": "Language",
     "settings.language.description": "Interface language for this app. Grok still understands prompts in any language.",
@@ -79,6 +84,12 @@
     "chat.composer.chooseRepository": "Choose repository",
     "chat.composer.continueRemotely": "Continue remotely",
     "chat.composer.scrollToBottom": "Scroll to bottom",
+    "chat.update.restartToUpdate": "Restart to update",
+    "chat.update.updateAvailable": "Update available",
+    "chat.update.downloadedTitle": "Version {ver} is downloaded — restart to install",
+    "chat.update.availableTitle": "Version {ver} is available",
+    "chat.update.restartAria": "Restart to update to version {ver}",
+    "chat.update.availableAria": "Update available: version {ver}",
     "chat.welcome.starting": "Starting",
     "chat.welcome.connectGrok": "Connect Grok",
     "chat.mode.pick": "Pick mode",
@@ -251,6 +262,7 @@
 
     // ----- gear / model picker (webview) -----
     "chat.gear.modelAndEffort": "Model and Effort",
+    "chat.gear.modelEffortSession": "Model, effort and session",
     "chat.gear.loadingSession": "Loading the session…",
     "chat.gear.clickToChange": "click to change",
     "chat.gear.effort.none": "None — no extra reasoning",
@@ -341,6 +353,8 @@
     "chat.rail.clearAllConfirm": "Clear all",
     "chat.rail.renameConversationTitle": "Rename conversation",
     "chat.rail.sessionActions": "Session actions",
+    "chat.rail.newSessionHere": "New session here",
+    "chat.rail.newSessionSwitch": "Switch to this project and start a new session",
 
     // ----- settings panel (webview) -----
     "settings.textSize.openInVSCodeDesc": "Chat zoom lives in VS Code settings so it can stay a user or workspace preference.",
@@ -422,6 +436,17 @@
     "filePanel.viewModeAria": "View mode",
     "filePanel.editFileTitle": "Edit file",
     "filePanel.cancelChangesTitle": "Cancel changes?",
+    "filePanel.openExternal": "Open in default app",
+    "filePanel.reload": "Reload",
+    "filePanel.overwrite": "Overwrite",
+    "filePanel.preview": "Preview",
+    "filePanel.editSource": "Edit source",
+    "filePanel.hideFilePanel": "Hide file panel",
+    "filePanel.showFilePanel": "Show file panel",
+    "filePanel.restore": "Restore",
+    "filePanel.maximize": "Maximize",
+    "filePanel.restoreFilePanel": "Restore file panel",
+    "filePanel.maximizeFilePanel": "Maximize file panel",
 
     // ----- native host UI (extension side, mirrored for fallback) -----
     "chat.warn.startSessionFirst": "Start a session first.",
@@ -650,7 +675,25 @@
     "chat.action.copyPath": "Copy path",
     "chat.action.closeImagePreview": "Close image preview",
     "chat.action.loadingFullImage": "Loading full-size image",
-    "settings.voice.addTerm": "Add a term"
+    "settings.voice.addTerm": "Add a term",
+
+    // ----- desktop app menu (mirrors src/i18n.ts) -----
+    "menu.file": "File",
+    "menu.file.addProjectFolder": "Add Project Folder…",
+    "menu.file.closeProjectFolder": "Close Project Folder",
+    "menu.file.quit": "Quit",
+    "menu.edit": "Edit",
+    "menu.view": "View",
+    "menu.view.toggleDevTools": "Toggle Developer Tools",
+    "menu.view.actualSize": "Actual Size",
+    "menu.view.zoomIn": "Zoom In",
+    "menu.view.zoomOut": "Zoom Out",
+    "menu.language": "Language",
+    "menu.help": "Help",
+    "menu.help.githubRepo": "GitHub Repository",
+    "menu.help.about": "About {name}",
+
+    "chat.warn.usingCachedPlanVersion": "grok --version failed; using last verified version for Plan mode."
   };
 
   var data = (root && root.__I18N) || { locale: "en", dict: {} };
