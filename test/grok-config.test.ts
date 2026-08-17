@@ -6,9 +6,13 @@ import {
   globalConfigPath,
   GLOBAL_CONFIG_STUB,
   isAlwaysApprovePermission,
+  modelKeyFromId,
   projectConfigPath,
   PROJECT_CONFIG_STUB,
+  readModelSections,
   readUiPermissionMode,
+  tomlQuote,
+  upsertModelSection,
 } from "../src/grok-config";
 
 // A realistic grok config.toml, mirroring the on-disk shape.
@@ -120,6 +124,102 @@ describe("configForcesAlwaysApprove", () => {
     expect(
       configForcesAlwaysApprove({ project: projectWithoutKey, global: CONFIG("always-approve") }),
     ).toBe(true);
+  });
+});
+
+describe("readModelSections / upsertModelSection (third-party model management)", () => {
+  const TOML = `[cli]
+installer = "internal"
+
+[model.longcat]
+model = "LongCat-2.0"
+base_url = "https://api.longcat.chat/openai/v1"
+name = "LongCat（美团）"
+description = "第三方：LongCat-2.0"
+env_key = "LONGCAT_API_KEY"
+api_backend = "chat_completions"
+context_window = 1000000
+max_completion_tokens = 16384
+
+[model.minimax]
+model = "MiniMax-M3"
+base_url = "https://api.minimaxi.com/v1"
+
+[models]
+default = "grok-4.6"
+`;
+
+  it("parses every [model.*] table into typed sections", () => {
+    const sections = readModelSections(TOML);
+    expect(sections).toHaveLength(2);
+    expect(sections[0]).toEqual({
+      key: "longcat",
+      model: "LongCat-2.0",
+      base_url: "https://api.longcat.chat/openai/v1",
+      name: "LongCat（美团）",
+      description: "第三方：LongCat-2.0",
+      env_key: "LONGCAT_API_KEY",
+      api_backend: "chat_completions",
+      context_window: 1000000,
+      max_completion_tokens: 16384,
+    });
+    expect(sections[1]).toEqual({
+      key: "minimax",
+      model: "MiniMax-M3",
+      base_url: "https://api.minimaxi.com/v1",
+    });
+  });
+
+  it("skips non-model tables and unparseable values", () => {
+    const sections = readModelSections(`[models]\ndefault = "grok-build"\n\n[model.x]\nmodel = "X-1"\nflag = true\nbroken = }\n`);
+    expect(sections).toEqual([{ key: "x", model: "X-1", flag: true }]);
+  });
+
+  it("appends a new model section and keeps the rest of the file", () => {
+    const next = upsertModelSection(TOML, {
+      key: "qwen",
+      name: "Qwen-VL",
+      model: "qwen-vl-max",
+      base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      env_key: "QWEN_API_KEY",
+      api_backend: "chat_completions",
+    });
+    expect(next).toContain('[model.qwen]');
+    expect(next).toContain('model = "qwen-vl-max"');
+    expect(next).toContain('name = "Qwen-VL"');
+    expect(next).toContain('[model.longcat]');
+    expect(next).toContain('default = "grok-4.6"');
+    expect(readModelSections(next)).toHaveLength(3);
+  });
+
+  it("replaces an existing model section in place", () => {
+    const next = upsertModelSection(TOML, {
+      key: "minimax",
+      name: "MiniMax New",
+      model: "MiniMax-M3.5",
+      base_url: "https://api.minimaxi.com/v1",
+    });
+    expect(next).not.toContain('name = "MiniMax-M3"');
+    expect(next).toContain('name = "MiniMax New"');
+    expect(next).toContain('model = "MiniMax-M3.5"');
+    expect(readModelSections(next)).toHaveLength(2);
+    const minimax = readModelSections(next).find((s) => s.key === "minimax");
+    expect(minimax?.name).toBe("MiniMax New");
+    // A replace drops fields the caller did not supply (edit, not merge).
+    expect(minimax?.env_key).toBeUndefined();
+  });
+
+  it("escapes quotes and backslashes in string values", () => {
+    expect(tomlQuote('a"b\\c')).toBe('"a\\"b\\\\c"');
+    expect(tomlQuote(16384)).toBe("16384");
+    const next = upsertModelSection("", { key: "odd", name: 'we"ird', base_url: "http://x" });
+    expect(readModelSections(next)[0].name).toBe('we"ird');
+  });
+
+  it("modelKeyFromId normalizes a free-form model id to a stable key", () => {
+    expect(modelKeyFromId("LongCat-2.0")).toBe("longcat-2.0");
+    expect(modelKeyFromId("  Grok 4.6 VISION ")).toBe("grok-4.6-vision");
+    expect(modelKeyFromId("😀")).toBe("model");
   });
 });
 

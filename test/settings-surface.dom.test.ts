@@ -120,7 +120,7 @@ describe("settings catalog", () => {
     });
     const local = api.visibleCategories(snapshot, api.defaultEnv(fullEnv()));
     expect(local.map((c) => c.id)).toEqual([
-      "general", "voice", "notifications", "providers", "account", "advanced", "about",
+      "general", "voice", "notifications", "models", "providers", "account", "advanced", "about",
     ]);
     const remoteRows = api.visibleRows(snapshot, api.defaultEnv(fullEnv({ isRemote: true })));
     expect(remoteRows.some((row) => row.hostLocal)).toBe(false);

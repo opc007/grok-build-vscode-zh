@@ -85,6 +85,150 @@ export function readUiPermissionMode(toml: string): string | undefined {
   return undefined;
 }
 
+/** A parsed `[model.<key>]` table from a config.toml string. */
+export interface CustomModelSection {
+  /** The table key after `[model.` — the stable id for upsert/replace. */
+  key: string;
+  name?: string;
+  model?: string;
+  base_url?: string;
+  description?: string;
+  env_key?: string;
+  api_backend?: string;
+  context_window?: number;
+  max_completion_tokens?: number;
+}
+
+/** Minimal TOML scalar parser: quoted strings, integers/floats, booleans. */
+function parseTomlValue(raw: string): string | number | boolean | undefined {
+  const s = raw.trim();
+  if (/^[+-]?\d+(\.\d+)?$/.test(s)) return Number(s);
+  if (s === "true" || s === "false") return s === "true";
+  const q = s.match(/^"(.*)"$/s);
+  if (q) {
+    return q[1]
+      .replace(/\\n/g, "\n")
+      .replace(/\\t/g, "\t")
+      .replace(/\\"/g, '"')
+      .replace(/\\\\/g, "\\");
+  }
+  return undefined;
+}
+
+/** Quote a scalar as a TOML string literal (numbers are kept unquoted). */
+export function tomlQuote(v: string | number | boolean): string {
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  return `"${v.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n").replace(/\t/g, "\\t")}"`;
+}
+
+/**
+ * Parse every `[model.*]` table in a config.toml string. Non-model tables and
+ * nested tables are skipped; a value that fails to parse as a known scalar is
+ * omitted rather than guessed.
+ */
+export function readModelSections(toml: string): CustomModelSection[] {
+  const out: CustomModelSection[] = [];
+  let current: CustomModelSection | null = null;
+  for (const raw of toml.split(/\r?\n/)) {
+    const line = raw.trim();
+    const table = line.match(/^\[\[?\s*([^\]]+?)\s*\]\]?$/);
+    if (table) {
+      const section = table[1].trim();
+      const m = section.match(/^model\.([A-Za-z0-9_.-]+)$/);
+      if (m) {
+        current = { key: m[1] };
+        out.push(current);
+      } else {
+        current = null;
+      }
+      continue;
+    }
+    if (!current) continue;
+    const kv = line.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$/);
+    if (!kv) continue;
+    const value = parseTomlValue(kv[2].replace(/#.*$/, "").trim());
+    if (value === undefined) continue;
+    const k = kv[1];
+    if (k === "key") continue;
+    (current as unknown as Record<string, string | number | boolean>)[k] = value;
+  }
+  return out;
+}
+
+/** A model section ready to be written back into a config.toml. */
+export interface CustomModelSpec {
+  /** `[model.<key>]` — sanitized; duplicates replace the existing section. */
+  key: string;
+  name?: string;
+  model?: string;
+  base_url?: string;
+  description?: string;
+  env_key?: string;
+  api_backend?: string;
+  context_window?: number;
+  max_completion_tokens?: number;
+}
+
+/** Coerce a free-form user model id into a stable `[model.<key>]` table key. */
+export function modelKeyFromId(modelId: string): string {
+  const k = String(modelId || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_.-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return k || "model";
+}
+
+/**
+ * Insert or replace a `[model.<key>]` table in a config.toml string. Existing
+ * blocks are replaced in place (values the caller did not supply are dropped —
+ * this is an edit, not a merge); a missing block is appended at the end. Pure:
+ * no fs access, so it stays unit-testable.
+ */
+export function upsertModelSection(toml: string, spec: CustomModelSpec): string {
+  const key = String(spec.key || "").replace(/[^A-Za-z0-9_.-]/g, "_") || "model";
+  const header = `[model.${key}]`;
+  const lines: string[] = [header];
+  for (const field of ["name", "model", "base_url", "description", "env_key", "api_backend"] as const) {
+    const v = spec[field];
+    if (v !== undefined && String(v).length > 0) lines.push(`${field} = ${tomlQuote(v)}`);
+  }
+  for (const field of ["context_window", "max_completion_tokens"] as const) {
+    const v = spec[field];
+    if (typeof v === "number" && Number.isFinite(v) && v > 0) lines.push(`${field} = ${v}`);
+  }
+  const block = lines.join("\n");
+
+  const src = toml.split(/\r?\n/);
+  let replaceStart = -1;
+  let replaceEnd = -1;
+  for (let i = 0; i < src.length; i++) {
+    const table = src[i].trim().match(/^\[\[?\s*([^\]]+?)\s*\]\]?$/);
+    if (!table) continue;
+    if (table[1].trim() === `model.${key}`) {
+      replaceStart = i;
+      for (let j = i + 1; j < src.length; j++) {
+        if (/^\s*\[\[?/.test(src[j])) {
+          replaceEnd = j;
+          break;
+        }
+      }
+      if (replaceEnd === -1) replaceEnd = src.length;
+      break;
+    }
+  }
+
+  if (replaceStart === -1) {
+    const trimmed = src.join("\n");
+    const sep = trimmed.length && !/\r?\n$/.test(trimmed) ? "\n" : "";
+    return `${trimmed}${sep}${block}\n`;
+  }
+
+  const head = src.slice(0, replaceStart).join("\n");
+  const tail = src.slice(replaceEnd).join("\n");
+  return `${head}${head ? "\n" : ""}${block}\n${tail}`;
+}
+
 /**
  * The effective always-approve verdict from a project + global config pair.
  * Project `.grok/config.toml` overrides global `~/.grok/config.toml` (grok

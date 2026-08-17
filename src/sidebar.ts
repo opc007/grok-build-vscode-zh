@@ -154,7 +154,13 @@ import {
   alwaysApproveSource,
   configForcesAlwaysApprove,
   globalConfigPath,
+  GLOBAL_CONFIG_STUB,
+  modelKeyFromId,
   projectConfigPath,
+  PROJECT_CONFIG_STUB,
+  ensureConfigToml,
+  readModelSections,
+  upsertModelSection,
 } from "./grok-config";
 import { sessionScopedRoots } from "./auth-roots";
 import { fileUriToPath, parseFileRef, shouldReadFileInline } from "./file-ref";
@@ -1638,6 +1644,84 @@ ${detail}`,
     return configForcesAlwaysApprove({ project: readSafe(projectPath), global: readSafe(globalPath) });
   }
 
+  private readSafeFile(p?: string): string | undefined {
+    if (!p) return undefined;
+    try {
+      return fs.readFileSync(p, "utf8");
+    } catch {
+      return undefined;
+    }
+  }
+
+  /** `[model.*]` sections currently in the user's global config.toml — the
+   *  source of truth for the Settings → 模型 rows. */
+  private readCustomModels(): ReturnType<typeof readModelSections> {
+    return readModelSections(this.readSafeFile(globalConfigPath()) ?? "");
+  }
+
+  /** Persist a user-supplied third-party model into `~/.grok/config.toml`.
+   *  The table key is derived from the model id (never the renderer's word), so
+   *  two sources cannot clobber each other's section. Env keys are NOT stored
+   *  here — only the env-var *name*, matching how grok reads `[model.*]`. */
+  private addCustomModel(model: {
+    name?: string;
+    model?: string;
+    base_url?: string;
+    description?: string;
+    env_key?: string;
+    context_window?: number;
+    max_completion_tokens?: number;
+  }): { ok: boolean; error?: string } {
+    const modelId = String(model?.model ?? "").trim();
+    if (!modelId) return { ok: false, error: "empty model id" };
+    const configPath = globalConfigPath();
+    ensureConfigToml(configPath, GLOBAL_CONFIG_STUB);
+    const current = this.readSafeFile(configPath) ?? GLOBAL_CONFIG_STUB;
+    const next = upsertModelSection(current, {
+      key: modelKeyFromId(modelId),
+      name: String(model?.name ?? "").trim() || undefined,
+      model: modelId,
+      base_url: String(model?.base_url ?? "").trim() || undefined,
+      description: String(model?.description ?? "").trim() || undefined,
+      env_key: String(model?.env_key ?? "").trim() || undefined,
+      api_backend: "chat_completions",
+      context_window: typeof model?.context_window === "number" ? model.context_window : undefined,
+      max_completion_tokens: typeof model?.max_completion_tokens === "number" ? model.max_completion_tokens : undefined,
+    });
+    try {
+      fs.writeFileSync(configPath, next, "utf8");
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: (e as Error).message };
+    }
+  }
+
+  /** Resolve + read a host-known config for the in-app editor, then post it.
+   *  Only `kind` — never a renderer path — selects the file. */
+  private openConfigInApp(kind: "global" | "project", projectCwd?: string): void {
+    const configPath = kind === "global"
+      ? globalConfigPath()
+      : projectConfigPath(projectCwd ?? this.workspaceRoot());
+    ensureConfigToml(configPath, kind === "global" ? GLOBAL_CONFIG_STUB : PROJECT_CONFIG_STUB);
+    const content = this.readSafeFile(configPath) ?? "";
+    this.post({ type: "configOpened", kind, path: configPath, content });
+  }
+
+  /** Write the in-app editor's content back to the host-resolved config file.
+   *  `kind` is the only input the path derives from; content cannot redirect
+   *  the write anywhere the user did not already have write access. */
+  private saveConfigInApp(kind: "global" | "project", content: string): void {
+    const configPath = kind === "global"
+      ? globalConfigPath()
+      : projectConfigPath(this.workspaceRoot());
+    try {
+      fs.writeFileSync(configPath, content, "utf8");
+      this.post({ type: "configSaved", ok: true, path: configPath });
+    } catch (e) {
+      this.post({ type: "configSaved", ok: false, error: (e as Error).message, path: configPath });
+    }
+  }
+
   private alwaysApproveNoticeShown = false;
 
   /** Tell the user once per activation that always-approve is set globally, so
@@ -1652,7 +1736,8 @@ ${detail}`,
       OPEN,
     ).then((pick) => {
       if (pick !== OPEN) return;
-      void this.host.openGlobalConfig();
+      if (this.host.canSwitchWorkspaceFolder) this.openConfigInApp("global");
+      else void this.host.openGlobalConfig();
     });
   }
 
@@ -7536,12 +7621,33 @@ ${detail}`,
         break;
       case "openGlobalConfig": {
         // Intent only — host resolves ~/.grok/config.toml (never a renderer path).
-        await this.host.openGlobalConfig();
+        if (this.host.canSwitchWorkspaceFolder) {
+          this.openConfigInApp("global");
+        } else {
+          await this.host.openGlobalConfig();
+        }
         break;
       }
       case "openProjectConfig": {
         // Intent only — host resolves project .grok/config.toml from session cwd.
-        await this.host.openProjectConfig(this.sessionCwd(session));
+        if (this.host.canSwitchWorkspaceFolder) {
+          this.openConfigInApp("project", this.sessionCwd(session));
+        } else {
+          await this.host.openProjectConfig(this.sessionCwd(session));
+        }
+        break;
+      }
+      case "listCustomModels": {
+        this.post({ type: "customModels", models: this.readCustomModels() });
+        break;
+      }
+      case "addModelSubmit": {
+        const result = this.addCustomModel(msg.model);
+        this.post({ type: "addModelResult", ok: result.ok, error: result.error, models: this.readCustomModels() });
+        break;
+      }
+      case "saveConfigFile": {
+        this.saveConfigInApp(msg.kind, msg.content);
         break;
       }
       case "runMcpList": {

@@ -29,6 +29,7 @@
     { id: "general", title: t("settings.category.general"), restore: true },
     { id: "voice", title: t("settings.category.voice"), restore: true },
     { id: "notifications", title: t("settings.category.notifications"), restore: true },
+    { id: "models", title: t("settings.category.models"), restore: false },
     { id: "providers", title: t("settings.category.providers"), restore: false },
     { id: "account", title: t("settings.category.account"), restore: false },
     { id: "advanced", title: t("settings.category.advanced"), restore: false },
@@ -42,6 +43,7 @@
     voice: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>',
     notifications: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',
     providers: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></svg>',
+    models: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="8" x="5" y="2" rx="1"/><rect width="14" height="8" x="5" y="14" rx="1"/><path d="M12 6h.01"/><path d="M12 18h.01"/></svg>',
     account: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
     advanced: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
     about: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>',
@@ -431,6 +433,25 @@
       describe: (s) => providerDescription(providerOf(s, "codex")),
     },
     {
+      id: "addCustomModel",
+      category: "models",
+      title: t("settings.models.addTitle"),
+      description: t("settings.models.addDesc"),
+      kind: "action",
+      actionLabel: t("settings.models.addAction"),
+      local: "addModel",
+      visible: (s, env) => !!(env && env.isDesktop && !env.isRemote),
+    },
+    {
+      id: "modelsOpenConfigHint",
+      category: "models",
+      title: t("settings.models.openConfigTitle"),
+      description: t("settings.models.openConfigDesc"),
+      kind: "status",
+      visible: (s, env) => !!(env && env.isDesktop && !env.isRemote),
+      describe: () => t("settings.models.openConfigDesc"),
+    },
+    {
       id: "continueRemotely",
       category: "account",
       title: t("chat.composer.continueRemotely"),
@@ -797,8 +818,24 @@
     return row.localOnly === true;
   }
 
+  /** One read-only row per `[model.*]` section currently in the config. These
+   *  are generated from the snapshot (dynamic data), so they can't live in the
+   *  static ROWS array. */
+  function customModelRows(snapshot) {
+    const list = Array.isArray(snapshot.customModels) ? snapshot.customModels : [];
+    return list.map((m, i) => ({
+      id: "customModel:" + (m.key || String(i)),
+      category: "models",
+      title: m.name || m.model || m.key,
+      description: [m.base_url, m.description].filter(Boolean).join(" · "),
+      kind: "value",
+      visible: () => true,
+      get: () => m.model || m.key || "",
+    }));
+  }
+
   function visibleRows(snapshot, env) {
-    return ROWS.filter((row) => rowVisible(row, snapshot, env));
+    return ROWS.concat(customModelRows(snapshot)).filter((row) => rowVisible(row, snapshot, env));
   }
 
   function visibleCategories(snapshot, env) {
@@ -947,6 +984,7 @@
       voiceKeyterms: [],
       telemetryEnabled: true,
       providers: [],
+      customModels: [],
       extVersion: "",
       cliVersion: "",
       hostKind: "",

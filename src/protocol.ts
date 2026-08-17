@@ -26,6 +26,7 @@ import type { FileChip } from "./chips";
 import type { RepoListEntry, SessionListEntry } from "./sessions";
 import type { Dot } from "./session-pool";
 import type { RunProgressUpdate } from "./run-progress";
+import type { CustomModelSection } from "./grok-config";
 
 /** grok's tool-call payload as it comes off the wire (acp emits it untyped). The
  *  webview reads a handful of fields; the index signature keeps assignment from
@@ -213,6 +214,19 @@ export type HostMsg =
    *  never sends this. Capability = frame arrived; no host flag. Fallback when
    *  the in-app updater cannot check or download. */
   | { type: "updateAvailable"; version: string; url: string }
+  /** Third-party `[model.*]` tables currently in `~/.grok/config.toml` —
+   *  the source of truth for the Settings → 模型 management rows. */
+  | { type: "customModels"; models: CustomModelSection[] }
+  /** Desktop in-app config editor: open `~/.grok/config.toml` (or the project
+   *  `.grok/config.toml`) for viewing/editing instead of handing it to the OS
+   *  default handler. Sent in reply to `openGlobalConfig` / `openProjectConfig`
+   *  when the host can show files in-app. */
+  | { type: "configOpened"; kind: "global" | "project"; path: string; content: string }
+  /** Result of an `addModelSubmit` write. `models` carries the fresh list so
+   *  the settings rows refresh without a second round-trip. */
+  | { type: "addModelResult"; ok: boolean; error?: string; models?: CustomModelSection[] }
+  /** Result of a `saveConfigFile` write from the in-app config editor. */
+  | { type: "configSaved"; ok: boolean; error?: string; path: string }
   /** Desktop in-app update is downloaded and waiting for restart. Host-local. */
   | { type: "updateReady"; version: string }
   | { type: "initialized"; info: { cliPath: string; cwd: string; version: string | null; provider?: "grok" | "codex"; init: { protocolVersion?: unknown } } }
@@ -513,6 +527,24 @@ export type WebviewMsg =
   | { type: "removeProjectFolder"; cwd?: string }
   | { type: "openGlobalConfig" }
   | { type: "openProjectConfig" }
+  /** Request the current `[model.*]` sections from `~/.grok/config.toml`. */
+  | { type: "listCustomModels" }
+  /** Persist a user-supplied third-party model into `~/.grok/config.toml`.
+   *  The host derives the `[model.<key>]` table key and never trusts a renderer
+   *  path; `env_key` names the environment variable the key lives in. */
+  | { type: "addModelSubmit"; model: {
+      name?: string;
+      model?: string;
+      base_url?: string;
+      description?: string;
+      env_key?: string;
+      context_window?: number;
+      max_completion_tokens?: number;
+    } }
+  /** Save the in-app config editor's content back to the resolved global or
+   *  project config. The host resolves the path from `kind` — never from the
+   *  renderer — so a stray path string cannot redirect the write. */
+  | { type: "saveConfigFile"; kind: "global" | "project"; content: string }
   | { type: "runMcpList" }
   | { type: "showLogs" }
   /** Unpackaged desktop only — toggle Chromium DevTools (gear / F12). */
@@ -712,7 +744,7 @@ export type WebviewMsg =
 // error). The runtime arrays are just the keys, so they can never drift from the
 // union without failing the build.
 const HOST_MESSAGE_TYPE_MAP: Record<HostMsg["type"], true> = {
-  initialState: true, moveViewHint: true, providerState: true, codexInstallProgress: true, planModeAvailability: true, showThinking: true, appPurpose: true, fontScale: true, grokUpdateStatus: true, updateAvailable: true, updateReady: true, telemetryEnabled: true,
+  initialState: true, moveViewHint: true, providerState: true, codexInstallProgress: true, planModeAvailability: true, showThinking: true, appPurpose: true, fontScale: true, grokUpdateStatus: true, updateAvailable: true, updateReady: true, telemetryEnabled: true, customModels: true, configOpened: true, addModelResult: true, configSaved: true,
   initialized: true, cliUpdating: true, session: true, sessionName: true, modelChanged: true,
   modeChanged: true, openModePopover: true, voiceState: true, voiceConfigured: true,
   voicePartial: true, voiceSubmit: true, voiceTranscript: true, voiceError: true,
@@ -736,7 +768,7 @@ const WEBVIEW_MESSAGE_TYPE_MAP: Record<WebviewMsg["type"], true> = {
   setMode: true, removeChip: true, toggleChip: true, openFile: true, showInFolder: true, openUrl: true,
   openText: true, openDiff: true, exportExpr: true, setEffort: true, openGlobalConfig: true,
   addProjectFolder: true, removeProjectFolder: true,
-  openProjectConfig: true, runMcpList: true, showLogs: true, toggleDevTools: true, openSettings: true, openSettingsSurface: true, closeSettingsSurface: true, moveView: true,
+  openProjectConfig: true, listCustomModels: true, addModelSubmit: true, saveConfigFile: true, runMcpList: true, showLogs: true, toggleDevTools: true, openSettings: true, openSettingsSurface: true, closeSettingsSurface: true, moveView: true,
   setShowThinking: true, setAppPurpose: true, setExpandCommandOutputs: true, setSteerByDefault: true,
   setSoundNotifications: true, setProcessingSound: true, setReadRepliesAloud: true, setSummarizeRepliesAloud: true, setVoiceSendPhrase: true, setVoiceKeyterms: true, setTelemetryEnabled: true, summarizeSpeech: true, requestImageFull: true, composerFocus: true,
   dropFile: true, permissionAnswer: true, exitPlanAnswer: true, questionAnswer: true,

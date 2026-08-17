@@ -4116,6 +4116,103 @@ mjx-container[display="true"] {
   filter: brightness(1.12);
 }
 
+/* Transient one-shot results (model added, config saved). */
+.grok-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%) translateY(8px);
+  z-index: 200;
+  max-width: 74vw;
+  padding: 9px 16px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--vscode-notifications-foreground);
+  background: var(--vscode-notifications-background, #252526);
+  border: 1px solid var(--vscode-notifications-border, rgba(255, 255, 255, 0.12));
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.grok-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Settings → 模型 → 添加新模型 form. */
+.model-form-panel {
+  width: min(420px, 100%);
+}
+.model-form-body {
+  white-space: normal;
+}
+.model-form-field {
+  display: block;
+  margin-top: 10px;
+}
+.model-form-label {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--vscode-descriptionForeground);
+  font-size: 12px;
+}
+.model-form-hint {
+  margin-top: 12px;
+  padding: 8px 10px;
+  color: var(--vscode-descriptionForeground);
+  font-size: 11px;
+  line-height: 1.5;
+  background: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.12));
+  border-left: 2px solid var(--vscode-textLink-foreground, #4daafc);
+  border-radius: 4px;
+}
+.confirm-primary.shake {
+  animation: grok-shake 0.4s ease;
+}
+@keyframes grok-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* In-app config editor (replaces the OS default-handler hop). */
+.config-editor-panel {
+  width: min(620px, 100%);
+  display: flex;
+  flex-direction: column;
+  max-height: 82vh;
+}
+.config-editor-path {
+  margin: 2px 0 8px;
+  padding: 6px 8px;
+  font: 11px/1.4 var(--vscode-editor-font-family, monospace);
+  color: var(--vscode-descriptionForeground);
+  background: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.12));
+  border-radius: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.config-editor-text {
+  width: 100%;
+  min-height: 42vh;
+  box-sizing: border-box;
+  resize: vertical;
+  padding: 10px;
+  font: 12px/1.5 var(--vscode-editor-font-family, monospace);
+  color: var(--vscode-editor-foreground);
+  background: var(--vscode-editor-background);
+  border: 1px solid var(--vscode-input-border, var(--vscode-editorWidget-border));
+  border-radius: 6px;
+  tab-size: 4;
+}
+.config-editor-text:focus {
+  outline: none;
+  border-color: var(--vscode-focusBorder);
+}
+
 /* In-app preview overlay (desktop previewInApp). Theme variables only. */
 .preview-overlay {
   position: fixed;

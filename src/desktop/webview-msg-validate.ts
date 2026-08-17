@@ -80,12 +80,27 @@ export function parseWebviewMsg(raw: unknown): WebviewMsg | null {
     case "removeProjectFolder":
     case "openGlobalConfig":
     case "openProjectConfig":
+    case "listCustomModels":
     case "runMcpList":
     case "showLogs":
     case "toggleDevTools":
     case "restartToUpdate":
     case "openSettings":
       if (type === "openSettings" && raw.section !== undefined && !isString(raw.section)) return null;
+      break;
+    case "addModelSubmit":
+      if (!isObject(raw.model)) return null;
+      if (!opt(raw.model.name, isString)) return null;
+      if (!opt(raw.model.model, isString)) return null;
+      if (!opt(raw.model.base_url, isString)) return null;
+      if (!opt(raw.model.description, isString)) return null;
+      if (!opt(raw.model.env_key, isString)) return null;
+      if (!opt(raw.model.context_window, isNumber)) return null;
+      if (!opt(raw.model.max_completion_tokens, isNumber)) return null;
+      break;
+    case "saveConfigFile":
+      if (raw.kind !== "global" && raw.kind !== "project") return null;
+      if (!isString(raw.content)) return null;
       break;
     case "openSettingsSurface":
       if (raw.category !== undefined && !isString(raw.category)) return null;

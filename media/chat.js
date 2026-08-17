@@ -309,6 +309,7 @@
     onboardingInfo: {},
     codexInstall: { phase: "idle", receivedBytes: 0, totalBytes: 0, reason: "" },
     availableModels: [],
+    customModels: [],
     currentModeId: "agent",
     effort: "",
     cwd: "",
@@ -2250,6 +2251,7 @@
       voiceKeyterms: Array.isArray(state.voiceKeyterms) ? state.voiceKeyterms : [],
       telemetryEnabled: state.telemetryEnabled,
       providers: state.providers || [],
+      customModels: state.customModels || [],
       extVersion: state.extVersion,
       cliVersion: state.cliVersion,
       hostKind: state.hostKind,
@@ -2378,11 +2380,15 @@
       onLocal: (name) => {
         if (name === "explainRemote") showRemoteExplainer();
         if (name === "openDeviceManager") window.open("/", "_blank", "noopener");
+        if (name === "addModel") openAddModelForm();
       },
       closeOnAction: true,
       onClose: closeSettingsOverlay,
     });
     settingsSurface.focusSearch();
+    if (!IS_REMOTE && isDesktopHostCaps()) {
+      vscode.postMessage({ type: "listCustomModels" });
+    }
   }
 
   function openAllSettings() {
@@ -2542,6 +2548,202 @@
     overlay.appendChild(panel);
     document.body.appendChild(overlay);
     moreBtn.focus();
+  }
+
+  let toastTimer = null;
+
+  /** Transient bottom toast for one-shot results (model added, config saved). */
+  function showToast(text) {
+    let el = document.getElementById("grok-toast");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "grok-toast";
+      el.className = "grok-toast";
+      document.body.appendChild(el);
+    }
+    el.textContent = text;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("show"), 4500);
+  }
+
+  function closeOverlayEl(overlay, onKey) {
+    if (onKey) document.removeEventListener("keydown", onKey, true);
+    if (overlay && overlay.parentNode) overlay.remove();
+  }
+
+  /** Settings → 模型 → 添加新模型. Collects a third-party OpenAI-compatible
+   *  model into a form; the host persists it into `~/.grok/config.toml`. */
+  function openAddModelForm() {
+    const overlay = document.createElement("div");
+    overlay.className = "confirm-overlay";
+    const panel = document.createElement("div");
+    panel.className = "confirm-panel model-form-panel";
+    const title = document.createElement("div");
+    title.className = "confirm-title";
+    title.textContent = window.t("settings.models.formTitle");
+    panel.appendChild(title);
+
+    const body = document.createElement("div");
+    body.className = "confirm-body model-form-body";
+
+    const makeField = (label, placeholder, required) => {
+      const wrap = document.createElement("label");
+      wrap.className = "model-form-field";
+      const lab = document.createElement("span");
+      lab.className = "model-form-label";
+      lab.textContent = label;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "confirm-input";
+      input.placeholder = placeholder;
+      if (required) input.required = true;
+      wrap.append(lab, input);
+      return { wrap, input };
+    };
+
+    const nameField = makeField(window.t("settings.models.name"), "LongCat（美团）", false);
+    const modelField = makeField(window.t("settings.models.modelId"), "LongCat-2.0", true);
+    const urlField = makeField(window.t("settings.models.baseUrl"), "https://api.example.com/v1", true);
+    const keyField = makeField(window.t("settings.models.envKey"), "MY_API_KEY", true);
+    const ctxField = makeField(window.t("settings.models.contextWindow"), "1000000", false);
+    const descField = makeField(window.t("settings.models.description"), "第三方：…", false);
+
+    const hint = document.createElement("div");
+    hint.className = "model-form-hint";
+    hint.textContent = window.t("settings.models.envKeyHint");
+
+    body.append(
+      nameField.wrap, modelField.wrap, urlField.wrap, keyField.wrap,
+      ctxField.wrap, descField.wrap, hint,
+    );
+    panel.appendChild(body);
+
+    const actions = document.createElement("div");
+    actions.className = "confirm-actions";
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "confirm-btn";
+    cancelBtn.textContent = window.t("common.cancel");
+    const okBtn = document.createElement("button");
+    okBtn.type = "button";
+    okBtn.className = "confirm-btn confirm-primary";
+    okBtn.textContent = window.t("settings.models.addAction");
+    actions.append(cancelBtn, okBtn);
+    panel.appendChild(actions);
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+
+    const done = () => closeOverlayEl(overlay, onKey);
+    const onKey = (e) => {
+      if (e.key === "Escape") { e.stopPropagation(); done(); }
+    };
+    document.addEventListener("keydown", onKey, true);
+
+    const submit = () => {
+      const modelId = modelField.input.value.trim();
+      const baseUrl = urlField.input.value.trim();
+      const envKey = keyField.input.value.trim();
+      if (!modelId || !baseUrl || !envKey) {
+        okBtn.classList.add("shake");
+        setTimeout(() => okBtn.classList.remove("shake"), 500);
+        return;
+      }
+      const contextWindow = Number(ctxField.input.value.trim());
+      const spec = {
+        name: nameField.input.value.trim() || undefined,
+        model: modelId,
+        base_url: baseUrl,
+        env_key: envKey,
+        description: descField.input.value.trim() || undefined,
+        context_window: ctxField.input.value.trim() ? contextWindow : undefined,
+      };
+      done();
+      vscode.postMessage({ type: "addModelSubmit", model: spec });
+    };
+
+    cancelBtn.onclick = (e) => { e.stopPropagation(); done(); };
+    okBtn.onclick = (e) => { e.stopPropagation(); submit(); };
+    overlay.onclick = (e) => { if (e.target === overlay) { e.stopPropagation(); done(); } };
+    modelField.input.focus();
+  }
+
+  let configEditorEl = null;
+  let configEditorKey = null;
+  let configEditorOnKey = null;
+
+  /** In-app editor for the global / project config.toml — replaces the OS
+   *  default-handler hop (which on this machine handed the file to Cursor). */
+  function showConfigEditor(kind, path, content) {
+    closeConfigEditor();
+    configEditorKey = kind;
+    const overlay = document.createElement("div");
+    overlay.className = "confirm-overlay";
+    configEditorEl = overlay;
+    const panel = document.createElement("div");
+    panel.className = "confirm-panel config-editor-panel";
+    const title = document.createElement("div");
+    title.className = "confirm-title";
+    title.textContent = kind === "project"
+      ? window.t("settings.config.projectTitle")
+      : window.t("settings.config.globalTitle");
+    panel.appendChild(title);
+
+    const pathEl = document.createElement("div");
+    pathEl.className = "config-editor-path";
+    pathEl.textContent = path;
+    pathEl.title = path;
+    panel.appendChild(pathEl);
+
+    const textarea = document.createElement("textarea");
+    textarea.className = "config-editor-text";
+    textarea.value = content;
+    textarea.spellcheck = false;
+    textarea.setAttribute("aria-label", window.t("settings.config.editorAria"));
+    panel.appendChild(textarea);
+
+    const actions = document.createElement("div");
+    actions.className = "confirm-actions";
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "confirm-btn";
+    cancelBtn.textContent = window.t("common.cancel");
+    const saveBtn = document.createElement("button");
+    saveBtn.type = "button";
+    saveBtn.className = "confirm-btn confirm-primary";
+    saveBtn.textContent = window.t("common.save");
+    actions.append(cancelBtn, saveBtn);
+    panel.appendChild(actions);
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+
+    const done = () => closeConfigEditor();
+    const onKey = (e) => {
+      if (e.key === "Escape") { e.stopPropagation(); done(); }
+    };
+    document.addEventListener("keydown", onKey, true);
+    configEditorOnKey = onKey;
+
+    const save = () => {
+      const next = textarea.value;
+      done();
+      vscode.postMessage({ type: "saveConfigFile", kind, content: next });
+    };
+
+    cancelBtn.onclick = (e) => { e.stopPropagation(); done(); };
+    saveBtn.onclick = (e) => { e.stopPropagation(); save(); };
+    overlay.onclick = (e) => { if (e.target === overlay) { e.stopPropagation(); done(); } };
+    textarea.focus();
+  }
+
+  function closeConfigEditor() {
+    if (configEditorEl) {
+      const el = configEditorEl;
+      configEditorEl = null;
+      closeOverlayEl(el, configEditorOnKey);
+    }
+    configEditorKey = null;
+    configEditorOnKey = null;
   }
 
   function renderGearMain() {
@@ -11776,6 +11978,36 @@
           ensureRailGear();
           renderAppUpdateAffordance();
         }
+        break;
+      }
+      case "customModels": {
+        state.customModels = Array.isArray(msg.models) ? msg.models : [];
+        refreshSettingsOverlay();
+        break;
+      }
+      case "configOpened": {
+        const kind = msg.kind === "project" ? "project" : "global";
+        const path = typeof msg.path === "string" ? msg.path : "";
+        const content = typeof msg.content === "string" ? msg.content : "";
+        if (path) showConfigEditor(kind, path, content);
+        break;
+      }
+      case "configSaved": {
+        closeConfigEditor();
+        const ok = !!msg.ok;
+        showToast(ok
+          ? window.t("settings.config.savedTitle")
+          : window.t("settings.config.saveFailedTitle", { error: msg.error || "" }));
+        break;
+      }
+      case "addModelResult": {
+        if (Array.isArray(msg.models)) state.customModels = msg.models;
+        refreshSettingsOverlay();
+        if (!msg.ok) {
+          showToast(window.t("settings.models.addFailed", { error: msg.error || "" }));
+          break;
+        }
+        showToast(window.t("settings.models.addedRestart"));
         break;
       }
       case "initialized": {
