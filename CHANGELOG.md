@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **Computer use on macOS Desktop.** Turn on Computer use from the composer, describe a GUI task, and Grok drives the Mac one step at a time (screenshot → vision → next action) until done or Stop. Grok sessions only; needs Screen Recording + Accessibility. Non-vision custom models (e.g. LongCat) are refused when sending images so they cannot invent captions.
+
 ## 3.10.0 — 2026-08-15
 
 ### Added

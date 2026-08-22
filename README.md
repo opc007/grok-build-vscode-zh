@@ -12,7 +12,7 @@ Two ways to use the same agent UI on top of the **Grok Build CLI**:
 | **Get it** | [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=PawelHuryn.grok-vscode-phuryn) · [Open VSX](https://open-vsx.org/extension/PawelHuryn/grok-vscode-phuryn) | [GitHub Releases](https://github.com/phuryn/grok-build-vscode/releases) (see [Desktop install](#grok-build-desktop)) |
 | **Best when** | You already live in the editor | You want the agent as its own window |
 
-Both speak JSON-RPC to `grok agent stdio`, share chat history under `~/.grok`, and support **Remote Control** via **[AFK Pilot](https://afkpilot.com)** — pair once and watch, approve, and steer from your phone or any browser. Drop files in as `@`-context, run **multiple sessions**, generate **images & video inline**, and dictate by **voice**.
+Both speak JSON-RPC to `grok agent stdio`, share chat history under `~/.grok`, and support **Remote Control** via **[AFK Pilot](https://afkpilot.com)** — pair once and watch, approve, and steer from your phone or any browser. Drop files in as `@`-context, run **multiple sessions**, generate **images & video inline**, dictate by **voice**, and on **macOS Desktop** let Grok **control this computer** (Computer use).
 
 No manual setup on either host: onboarding **walks you through installing the `grok` CLI and signing in** — with a **SuperGrok or X Premium+ subscription**, or an **xAI API key**.
 
@@ -60,9 +60,18 @@ Type `/imagine <prompt>` (or `/imagine-video <prompt>`) and the result renders *
 <details>
 <summary><strong>Paste or attach images</strong> — Grok sees the pixels, not just a path</summary>
 
-**Ctrl+V a screenshot**, drag-drop an image, or attach one with the **+** picker (png/jpg/gif/webp, up to 20 MiB) — it's sent as vision input, so you can ask *"what's wrong with this UI?"* about a dialog you just captured. Disk imports keep their file path so Grok can also act on the real file, and chips restore when you reopen the session.
+**Ctrl+V a screenshot**, drag-drop an image, or attach one with the **+** picker (png/jpg/gif/webp, up to 20 MiB) — it's sent as vision input, so you can ask *"what's wrong with this UI?"* about a dialog you just captured. Disk imports keep their file path so Grok can also act on the real file, and chips restore when you reopen the session. Custom text-only models (e.g. LongCat) cannot see images — switch to Grok before sending a picture.
 
 ![Several pasted images attached in the composer as removable chips](docs/screenshots/paste_attach_images.png)
+
+</details>
+
+<details>
+<summary><strong>Computer use</strong> — let Grok operate this Mac (Desktop)</summary>
+
+On **Grok Build Desktop for macOS**, turn on **Computer use** (composer CPU button, or **+** → Computer use), describe a GUI task, and hit Start. The app runs an autonomous loop: Grok acts one step at a time through the shell (`screencapture` / `osascript` / `cliclick`), then the host captures the screen and feeds the fresh screenshot back as vision so it can decide the next move — until it finishes or you Stop.
+
+Requires a **Grok** session (not Codex or text-only third-party models), **Screen Recording** and **Accessibility** for Grok Build Desktop in System Settings, and enough Grok quota (multi-step tasks burn tokens quickly).
 
 </details>
 
@@ -406,20 +415,21 @@ Grok Build（社区版）是一个**图形界面（GUI）**，让你像用聊天
 | **怎么获取** | [VS Code 插件市场](https://marketplace.visualstudio.com/items?itemName=PawelHuryn.grok-vscode-phuryn) · [Open VSX](https://open-vsx.org/extension/PawelHuryn/grok-vscode-phuryn) | [GitHub Releases](https://github.com/phuryn/grok-build-vscode/releases) |
 | **适合谁** | 你本来就泡在编辑器里 | 你想把智能体当成独立窗口 |
 
-两者都通过 JSON-RPC 与 `grok agent stdio` 通信，在 `~/.grok` 下共享聊天历史，并支持通过 **[AFK Pilot](https://afkpilot.com)** 进行**远程控制**——一次配对后，即可在手机或任意浏览器里查看、批准、引导对话。可以把文件作为 `@` 上下文丢进去，运行**多个会话**，在对话中**直接生成图片与视频**，还能**语音输入**。
+两者都通过 JSON-RPC 与 `grok agent stdio` 通信，在 `~/.grok` 下共享聊天历史，并支持通过 **[AFK Pilot](https://afkpilot.com)** 进行**远程控制**——一次配对后，即可在手机或任意浏览器里查看、批准、引导对话。可以把文件作为 `@` 上下文丢进去，运行**多个会话**，在对话中**直接生成图片与视频**，还能**语音输入**；在 **macOS 桌面版**上还可以使用 **电脑控制（Computer use）**，让 Grok 操作本机界面。
 
 两种宿主都无需手动配置：首次使用会**引导你安装 `grok` CLI 并完成登录**——使用 **SuperGrok 或 X Premium+ 订阅**，或一个 **xAI API key** 即可。
 
 ### 为什么用这个？
 
-如果你常驻编辑器，**或**想要一个独立的智能体窗口，它就把 Grok Build 放进了一套可视化的工作流里：每次提案修改都有**差异预览**，可以把**打开的文件和选中内容作为上下文**，**并行会话**带状态点，**可恢复的历史**，**行内图片与视频**，以及**语音输入**。重活由 CLI 干，这些宿主只是你不想待在终端时的图形界面。
+如果你常驻编辑器，**或**想要一个独立的智能体窗口，它就把 Grok Build 放进了一套可视化的工作流里：每次提案修改都有**差异预览**，可以把**打开的文件和选中内容作为上下文**，**并行会话**带状态点，**可恢复的历史**，**行内图片与视频**，**语音输入**，以及桌面版上的**电脑控制**。重活由 CLI 干，这些宿主只是你不想待在终端时的图形界面。
 
 #### 主要功能
 
 - **带差异预览的权限卡片**：Grok 提案修改时，点「open diff →」即可在原生差异编辑器里审阅整份文件，再选择「允许一次 / 始终允许」或「拒绝」。文件只有在你批准后才会写入。
 - **模式切换——Agent / Plan / 自动接受**：从底部工具栏切换，中途也能切；切到「自动接受」可不再逐个批准卡片。
 - **图片与视频生成**：输入 `/imagine <提示词>`（或 `/imagine-video <提示词>`），结果直接渲染在对话中。
-- **粘贴或附加图片**：`Ctrl+V` 截图、拖拽图片、或点「+」选图（png/jpg/gif/webp，最大 20 MiB），作为视觉输入发给 Grok。
+- **粘贴或附加图片**：`Ctrl+V` 截图、拖拽图片、或点「+」选图（png/jpg/gif/webp，最大 20 MiB），作为视觉输入发给 Grok。纯文本第三方模型（如 LongCat）不能看图，发图前请切回 Grok。
+- **电脑控制（Computer use）**（**macOS 桌面版**，已可用）：点输入框旁的 CPU 图标，或「+」→「电脑控制」，描述任务后点「开始」。应用会让 Grok 逐步通过命令行操作本机（点击、输入、滚动等），每步结束后自动截屏并把最新画面作为图片发回，直到任务完成或你点「停止」。需使用 **Grok** 会话，并在系统设置中为 Grok Build Desktop 开启**屏幕录制**与**辅助功能**。
 - **语音控制**：麦克风按钮通过 xAI 的语音转文字 API 实时听写；说「grok send」即可免手提交。
 - **文件 chips**：当前编辑器自动带上；在输入框输入 `@` 可添加文件，拖拽、右键菜单、快捷键均可。
 - **会话历史**：并行会话带状态点，可恢复、重命名、搜索、清空。
@@ -449,7 +459,7 @@ Grok 默认打开在**次要侧边栏**（右侧）。想换位置？齿轮 → 
 
 #### Grok Build 桌面版
 
-独立的 macOS（Apple Silicon + Intel）与 Windows（x64）应用。界面与扩展一致，无需 VS Code。
+独立的 macOS（Apple Silicon + Intel）与 Windows（x64）应用。界面与扩展一致，无需 VS Code。**电脑控制（Computer use）目前仅支持 macOS 桌面版。**
 
 1. 从最新 [GitHub Release](https://github.com/phuryn/grok-build-vscode/releases) 下载对应安装包。
 2. 安装并打开，选择项目文件夹（File → Add Project Folder）。首次引导同样会安装 `grok` CLI 并登录。
