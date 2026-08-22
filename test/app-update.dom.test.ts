@@ -18,7 +18,7 @@ function mountRail(doc: Document) {
 }
 
 describe("desktop update rail affordance", () => {
-  it("shows Update available from updateAvailable and opens the release page", () => {
+  it("shows Update available from updateAvailable and starts an in-app download", () => {
     const h = bootWebview({ ready: true });
     mountRail(h.doc);
     dispatch(h.window, {
@@ -32,13 +32,10 @@ describe("desktop update rail affordance", () => {
     expect(btn.textContent).toBe("Update available");
     click(h.window, btn);
     const open = h.doc.querySelector(".rail-update-open") as HTMLButtonElement;
-    expect(open.textContent).toBe("Open release page");
+    expect(open.textContent).toBe("Download & install");
     h.posted.length = 0;
     click(h.window, open);
-    expect(h.posted).toContainEqual({
-      type: "openUpdateRelease",
-      url: "https://afkpilot.com/desktop-update?from=3.7.0",
-    });
+    expect(h.posted).toContainEqual({ type: "downloadUpdate" });
   });
 
   it("swaps the same button to Restart to update when updateReady arrives", () => {

@@ -2775,6 +2775,28 @@ textarea#input {
   gap: 6px;
   flex-shrink: 0;
 }
+#computer-use-btn {
+  position: relative;
+}
+#computer-use-btn.active {
+  color: var(--vscode-charts-orange, #d7ba7d);
+  background: var(--vscode-toolbar-hoverBackground, rgba(255,255,255,0.08));
+}
+#computer-use-btn.active::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--vscode-charts-orange, #d7ba7d);
+}
+#computer-use-btn.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 #mode-btn {
   flex-shrink: 1;
   min-width: 0;

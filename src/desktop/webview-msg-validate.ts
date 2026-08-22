@@ -85,8 +85,14 @@ export function parseWebviewMsg(raw: unknown): WebviewMsg | null {
     case "showLogs":
     case "toggleDevTools":
     case "restartToUpdate":
+    case "downloadUpdate":
+    case "stopComputerUse":
+      break;
     case "openSettings":
-      if (type === "openSettings" && raw.section !== undefined && !isString(raw.section)) return null;
+      if (raw.section !== undefined && !isString(raw.section)) return null;
+      break;
+    case "startComputerUse":
+      if (!isString(raw.task)) return null;
       break;
     case "addModelSubmit":
       if (!isObject(raw.model)) return null;

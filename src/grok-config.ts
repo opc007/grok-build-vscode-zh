@@ -169,6 +169,45 @@ export interface CustomModelSpec {
   max_completion_tokens?: number;
 }
 
+/**
+ * Whether a model id is expected to understand inline images.
+ *
+ * Native Grok / Codex ids are treated as vision-capable. Custom `[model.*]`
+ * chat_completions backends (LongCat, MiniMax, …) are text-only unless the
+ * id/name/description clearly marks multimodal / vision — otherwise the CLI
+ * still attaches pixels + an `[Image #N]` tag, the model cannot see them,
+ * often tries `read_file` on the JPEG, hits "Cannot read binary file", and
+ * invents a description. Callers should refuse the send instead.
+ */
+export function modelSupportsVision(
+  modelId: string | null | undefined,
+  customModels: readonly CustomModelSection[] = [],
+): boolean {
+  const id = String(modelId || "").trim();
+  if (!id) return true; // default Grok model
+  const lower = id.toLowerCase();
+  if (/^grok([.-]|$)/.test(lower) || lower.startsWith("grok-build")) return true;
+  // Codex composite ids / OpenAI vision models.
+  if (/^(gpt-|o[0-9]|codex|chatgpt|openai)/.test(lower)) return true;
+
+  const custom = customModels.find(
+    (m) =>
+      m.model === id ||
+      m.key === id ||
+      m.key === modelKeyFromId(id) ||
+      (m.name != null && m.name === id),
+  );
+  const blob = [id, custom?.model, custom?.name, custom?.description, custom?.key]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  if (/vision|多模态|vl-|\/vl\b|qwen-vl|gpt-4o|gemini/.test(blob)) return true;
+  // Known custom section without a vision claim → refuse.
+  if (custom) return false;
+  // Unknown id (not in config) — do not block; may be a new Grok SKU.
+  return true;
+}
+
 /** Coerce a free-form user model id into a stable `[model.<key>]` table key. */
 export function modelKeyFromId(modelId: string): string {
   const k = String(modelId || "")

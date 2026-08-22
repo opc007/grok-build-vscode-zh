@@ -372,6 +372,9 @@ export const INBOUND_DISPOSITION: Record<WebviewMsg["type"], InboundDisposition>
   // Desktop update notice click-through — a phone cannot update the desk.
   openUpdateRelease: "host-local",
   restartToUpdate: "host-local",
+  downloadUpdate: "host-local",
+  startComputerUse: "host-local",
+  stopComputerUse: "host-local",
   setLanguage: "host-local",
 };
 
@@ -629,6 +632,7 @@ export const OUTBOUND_DISPOSITION: Record<HostMsg["type"], OutboundDisposition> 
   submitQueuedSend: "mirror",
   steerUnavailable: "mirror",
   usage: "mirror",
+  computerUseState: "host-local",
 };
 
 /**
@@ -769,6 +773,7 @@ export const OUTBOUND_PROJECT_AUTH: Record<HostMsg["type"], OutboundProjectAuth>
   submitQueuedSend: "scope",
   steerUnavailable: "scope",
   usage: "scope",
+  computerUseState: "scope",
 };
 
 /**

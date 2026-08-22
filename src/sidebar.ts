@@ -22,8 +22,22 @@ import { isCanonicallyInsideRoot } from "./file-tree";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { AcpClient, EffortLevel, ExitPlanRequest, PermissionRequest, QuestionRequest } from "./acp";
-import type { AcpProvider, BackendSessionListEntry } from "./acp-backend";
+import { exec as execCb } from "node:child_process";
+import { promisify } from "node:util";
+import * as https from "node:https";
+const execAsync = promisify(execCb);
+import { AcpClient, EffortLevel, ExitPlanRequest, PermissionRequest, QuestionRequest, type PromptContentBlock } from "./acp";import type { AcpProvider, BackendSessionListEntry } from "./acp-backend";
+import {
+  COMPUTER_USE_MAX_STEPS,
+  COMPUTER_USE_SCREENSHOT_PATH,
+  buildComputerUseContinueText,
+  buildComputerUseInstructions,
+  buildComputerUseUserLabel,
+  computerUseSupportsProvider,
+  detectComputerUseDone,
+  isComputerUseHostSupported,
+  screenCaptureCommand,
+} from "./computer-use";
 import { CODEX_ACP_ADAPTER_VERSION, CodexBackend, isCodexCredentialError } from "./codex-backend";
 import { locateCodexCli, resolveCodexHome } from "./codex-cli-locator";
 import { CODEX_MANAGED_VERSION, installManagedCodex } from "./codex-managed-installer";
@@ -156,6 +170,7 @@ import {
   globalConfigPath,
   GLOBAL_CONFIG_STUB,
   modelKeyFromId,
+  modelSupportsVision,
   projectConfigPath,
   PROJECT_CONFIG_STUB,
   ensureConfigToml,
@@ -571,6 +586,17 @@ export class GrokSidebar {
   private codexSessionRefresh = new Map<string, Promise<void>>();
   private codexInstallAbort?: AbortController;
   private providerConnectionState: ProviderConnections = {};
+  /** Active autonomous computer-use loop, or null when idle. */
+  private computerUse: {
+    active: boolean;
+    step: number;
+    task: string;
+    /** Auto-accept flag restored when the loop ends. */
+    prevAutoApprove: boolean;
+    sessionGen: number;
+  } | null = null;
+  /** Most recent computer-use screenshot (JPEG base64), injected next turn. */
+  private lastScreenshotBase64: string | null = null;
   /**
    * Bounds on the live-session pool (see session-pool.ts). A backgrounded session
    * idle past {@link IDLE_TTL_MS}, or beyond the {@link MAX_LIVE_SESSIONS} LRU cap,
@@ -6054,6 +6080,278 @@ ${detail}`,
     return false;
   }
 
+  /** Download and install a desktop update in-app from GitHub releases. */
+  private async downloadAndInstallUpdate(): Promise<void> {
+    const REPO_OWNER = "opc007";
+    const REPO_NAME = "grok-build-vscode-zh";
+    const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases?per_page=10`;
+
+    try {
+      // 1. Fetch latest release
+      const releases = await new Promise<unknown[]>((resolve, reject) => {
+        https.get(API_URL, { headers: { "User-Agent": "GrokBuildDesktop" } }, (res) => {
+          let data = "";
+          res.on("data", (chunk: string) => (data += chunk));
+          res.on("end", () => {
+            try { resolve(JSON.parse(data)); } catch { reject(new Error("Failed to parse release data")); }
+          });
+          res.on("error", reject);
+        }).on("error", reject);
+      });
+
+      // 2. Find .dmg asset in latest non-draft release
+      let downloadUrl = "";
+      let version = "";
+      for (const r of releases) {
+        if (!r || typeof r !== "object") continue;
+        const release = r as Record<string, unknown>;
+        if (release.draft) continue;
+        const assets = Array.isArray(release.assets) ? release.assets : [];
+        for (const a of assets) {
+          const asset = a as Record<string, unknown>;
+          const name = String(asset.name || "");
+          if (name.endsWith("-mac-arm64.dmg") || name.endsWith("-mac-x64.dmg")) {
+            downloadUrl = String(asset.browser_download_url || "");
+            version = String(release.tag_name || "").replace(/^v/, "");
+            break;
+          }
+        }
+        if (downloadUrl) break;
+      }
+
+      if (!downloadUrl) {
+        // No GitHub releases — fall back to opening the release page
+        void this.host.openExternal(`https://github.com/${REPO_OWNER}/${REPO_NAME}/releases`);
+        return;
+      }
+
+      // 3. Notify user
+      this.post({ type: "hostNotice", level: "info", text: `正在下载 v${version}…` });
+
+      // 4. Download .dmg to /tmp
+      const dmgPath = path.join(os.tmpdir(), `grok-update-${version}.dmg`);
+      await new Promise<void>((resolve, reject) => {
+        https.get(downloadUrl, { headers: { "User-Agent": "GrokBuildDesktop" } }, (res) => {
+          if (res.statusCode === 302 || res.statusCode === 301) {
+            https.get(String(res.headers.location || ""), { headers: { "User-Agent": "GrokBuildDesktop" } }, (res2) => {
+              const file = fs.createWriteStream(dmgPath);
+              res2.pipe(file);
+              file.on("finish", () => { file.close(); resolve(); });
+              file.on("error", (err) => { fs.unlink(dmgPath, () => {}); reject(err); });
+            }).on("error", reject);
+            return;
+          }
+          const file = fs.createWriteStream(dmgPath);
+          res.pipe(file);
+          file.on("finish", () => { file.close(); resolve(); });
+          file.on("error", (err) => { fs.unlink(dmgPath, () => {}); reject(err); });
+        }).on("error", reject);
+      });
+
+      // 5. Mount .dmg
+      const mountResult = await execAsync(`hdiutil attach "${dmgPath}" -nobrowse -quiet`);
+      const mountPoint = mountResult.stdout.trim().split("\n").pop()?.trim() || "";
+
+      // 6. Find .app in mounted volume
+      const entries = fs.readdirSync(mountPoint);
+      const appEntry = entries.find((e) => e.endsWith(".app"));
+      if (!appEntry) {
+        await execAsync(`hdiutil detach "${mountPoint}" -quiet`);
+        void this.host.showWarningMessage("未找到应用文件，更新失败。");
+        return;
+      }
+      const appPath = path.join(mountPoint, appEntry);
+
+      // 7. Copy to /Applications
+      const targetPath = "/Applications/Grok Build Desktop.app";
+      await execAsync(`cp -R "${appPath}" "${targetPath}"`);
+
+      // 8. Detach .dmg
+      await execAsync(`hdiutil detach "${mountPoint}" -quiet`);
+
+      // 9. Clean up
+      fs.unlinkSync(dmgPath);
+
+      // 10. Relaunch
+      this.post({ type: "hostNotice", level: "info", text: `v${version} 已安装，正在重启…` });
+      await execAsync(`open "${targetPath}"`);
+      setTimeout(() => process.exit(0), 1000);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      this.host.appendLine(`[update] download failed: ${msg}`);
+      void this.host.showWarningMessage(`更新下载失败: ${msg}`);
+    }
+  }
+
+  /** Start the autonomous computer-use loop on the focused session. */
+  private async startComputerUse(task: string): Promise<void> {
+    const locale = this.activeLocale();
+    const trimmed = String(task || "").trim();
+    if (!trimmed) {
+      void this.host.showInformationMessage(t(locale, "chat.computerUse.needTask"));
+      return;
+    }
+    const isDesktop = this.host.remoteInstallIdSuffix === ":desktop";
+    if (!isComputerUseHostSupported(process.platform, isDesktop)) {
+      void this.host.showWarningMessage(t(locale, "chat.computerUse.needDesktopMac"));
+      return;
+    }
+    if (this.computerUse?.active) {
+      this.stopComputerUse(t(locale, "chat.computerUse.replaced"));
+    }
+    const session = this.focused;
+    const client = session.client;
+    if (!client || !sessionReadyForPrompt(session)) {
+      void this.host.showInformationMessage(t(locale, "chat.computerUse.needSession"));
+      return;
+    }
+    if (!computerUseSupportsProvider(session.provider)) {
+      void this.host.showWarningMessage(
+        t(locale, "chat.computerUse.needGrok", {
+          provider: session.provider === "codex" ? "Codex" : String(session.provider || "unknown"),
+        }),
+      );
+      return;
+    }
+    if (this.turnInFlight(session)) {
+      void this.host.showWarningMessage(t(locale, "chat.computerUse.busy"));
+      return;
+    }
+
+    // Codex-aligned permission preflight: Screen Recording must work before the loop.
+    const firstShot = await this.captureComputerUseScreen();
+    if (!firstShot) {
+      void this.host.showWarningMessage(t(locale, "chat.computerUse.screenshotFailed"));
+      return;
+    }
+    this.lastScreenshotBase64 = firstShot;
+    this.post({ type: "hostNotice", level: "info", text: t(locale, "chat.computerUse.accessibilityHint") });
+
+    const prevAutoApprove = session.autoApprove;
+    session.autoApprove = true;
+    this.autoApprovePendingPermissions(session);
+    this.computerUse = {
+      active: true,
+      step: 0,
+      task: trimmed,
+      prevAutoApprove,
+      sessionGen: session.gen,
+    };
+    this.post({ type: "computerUseState", active: true, step: 0 });
+    this.host.appendLine(`[computer-use] start: ${trimmed}`);
+
+    // One user-visible bubble for the task; continue prompts stay host-side.
+    session.hasHistory = true;
+    session.userMessageCount += 1;
+    this.emit(session, {
+      type: "userMessage",
+      text: buildComputerUseUserLabel(trimmed, locale),
+      chips: [],
+    });
+
+    let turn = 0;
+    while (this.computerUse?.active && session.client === client && session.gen === this.computerUse.sessionGen) {
+      turn++;
+      this.computerUse.step = turn;
+      if (turn > COMPUTER_USE_MAX_STEPS) {
+        this.stopComputerUse(t(locale, "chat.computerUse.maxSteps"));
+        break;
+      }
+      this.post({ type: "computerUseState", active: true, step: turn });
+
+      const blocks: PromptContentBlock[] =
+        turn === 1
+          ? [{ type: "text", text: buildComputerUseInstructions(trimmed, locale) }]
+          : [{ type: "text", text: buildComputerUseContinueText(locale) }];
+      if (this.lastScreenshotBase64) {
+        blocks.push({ type: "image", mimeType: "image/jpeg", data: this.lastScreenshotBase64 });
+        this.lastScreenshotBase64 = null;
+      }
+
+      const chunks: string[] = [];
+      const capture = (textChunk: string) => chunks.push(String(textChunk ?? ""));
+      client.on("messageChunk", capture);
+      this.host.appendLine(
+        `[computer-use] turn ${turn}/${COMPUTER_USE_MAX_STEPS} prompt: ${turn === 1 ? "instructions" : "continue"}${blocks.some((b) => b.type === "image") ? " +screenshot" : ""}`,
+      );
+
+      this.emit(session, { type: "agentStart" });
+      const turnToken = beginTurn(session);
+      this.setStatus(session, "working");
+      this.noteSessionActivity(session);
+      try {
+        const meta = await client.prompt(blocks);
+        if (session.gen !== this.computerUse?.sessionGen) return;
+        if (!endTurn(session, turnToken)) return;
+        this.emit(session, { type: "agentEnd", meta });
+        this.setStatus(session, "done");
+      } catch (e) {
+        this.host.appendLine(`[computer-use] turn ${turn} failed: ${(e as Error).message}`);
+        const userStopped = !this.computerUse?.active;
+        if (endTurn(session, turnToken)) {
+          if (!userStopped) {
+            this.emit(session, { type: "agentError", text: (e as Error).message });
+            this.setStatus(session, "error");
+          } else {
+            this.setStatus(session, "idle");
+          }
+        }
+        // User stop cancels the in-flight prompt — treat as a clean halt.
+        if (userStopped) break;
+        this.stopComputerUse(t(locale, "chat.computerUse.error"));
+        break;
+      } finally {
+        client.off("messageChunk", capture);
+        endTurn(session, turnToken);
+      }
+
+      if (!this.computerUse?.active) break;
+      const reply = chunks.join("").trim();
+      if (detectComputerUseDone(reply)) {
+        this.stopComputerUse(t(locale, "chat.computerUse.done"));
+        break;
+      }
+      const shot = await this.captureComputerUseScreen();
+      if (!shot) {
+        this.stopComputerUse(t(locale, "chat.computerUse.screenshotFailed"));
+        break;
+      }
+      this.lastScreenshotBase64 = shot;
+    }
+  }
+
+  /** Capture the screen and return JPEG base64, or null on failure. */
+  private async captureComputerUseScreen(): Promise<string | null> {
+    try {
+      await execAsync(screenCaptureCommand(), { timeout: 15_000 });
+      const buf = fs.readFileSync(COMPUTER_USE_SCREENSHOT_PATH);
+      return buf.toString("base64");
+    } catch (e) {
+      this.host.appendLine(`[computer-use] screenshot failed: ${(e as Error).message}`);
+      return null;
+    }
+  }
+
+  /** Stop the loop, restore auto-approve, and cancel any in-flight prompt. */
+  private stopComputerUse(status?: string): void {
+    if (!this.computerUse) return;
+    const last = this.computerUse;
+    this.computerUse = null;
+    this.lastScreenshotBase64 = null;
+    const session = this.focused;
+    if (session.gen === last.sessionGen) {
+      session.autoApprove = last.prevAutoApprove;
+      if (this.turnInFlight(session) && session.client) {
+        void session.client.cancel("computer-use stopped");
+      }
+    }
+    this.post({ type: "computerUseState", active: false, step: last.step, status });
+    if (status) {
+      this.post({ type: "hostNotice", level: "info", text: status });
+      this.host.appendLine(`[computer-use] stopped: ${status}`);
+    }
+  }
+
   /** Confirm a restart for a setting that only applies on a fresh session
    *  (reasoning effort, cross-agent model). Returns the chosen restart mode, or
    *  undefined if the user dismissed the dialog. */
@@ -7462,6 +7760,15 @@ ${detail}`,
         break;
       case "restartToUpdate":
         this.host.installAppUpdate?.();
+        break;
+      case "downloadUpdate":
+        void this.downloadAndInstallUpdate();
+        break;
+      case "startComputerUse":
+        void this.startComputerUse(msg.task);
+        break;
+      case "stopComputerUse":
+        this.stopComputerUse(t(this.activeLocale(), "chat.computerUse.cancelled"));
         break;
       case "openText": {
         // Basename only — a renderer-supplied path must not choose the directory.
@@ -10980,6 +11287,22 @@ ${detail}`,
     // tags, the image blocks they name, and the chips painted on the bubble all
     // come off THIS list, in this order.
     const chips = bare ? [] : withPerMessageImageIndices([...session.chips]);
+
+    // Custom chat_completions models (LongCat, MiniMax, …) cannot see pixels.
+    // Sending the image anyway yields `Cannot read binary file` + a fabricated
+    // caption — refuse before we clear the composer.
+    const imageChips = chips.filter((c) => !c.hidden && isImageChip(c));
+    if (imageChips.length > 0) {
+      const modelId = client.currentModelId || "";
+      if (!modelSupportsVision(modelId, this.readCustomModels())) {
+        const label = modelId || "this model";
+        this.emit(session, {
+          type: "agentError",
+          text: t(this.activeLocale(), "chat.warn.modelNoVision", { model: label }),
+        });
+        return;
+      }
+    }
 
     // Pre-read every visible image BEFORE anything is cleared or sent. Any
     // failure blocks the whole send with the chips intact — never a prompt
@@ -14649,6 +14972,7 @@ ${fileShellOpen}
         <div class="toolbar-left">
           <button id="add-btn" class="icon-btn" title="${lt("chat.composer.addContext")}"></button>
           <button id="gear-btn" class="icon-btn" title="${lt("chat.composer.settings")}"></button>
+          <button id="computer-use-btn" class="icon-btn" type="button" title="${lt("chat.computerUse.title")}" aria-label="${lt("chat.computerUse.title")}" hidden></button>
           <div class="context-donut" id="donut" title="${lt("chat.composer.contextUsage")}">
             <svg width="16" height="16" viewBox="0 0 16 16">
               <circle cx="8" cy="8" r="6" fill="none" stroke="var(--vscode-editorWidget-border,#444)" stroke-width="3"/>
@@ -14663,6 +14987,7 @@ ${fileShellOpen}
           <button id="send-btn" class="send"></button>
         </div>
       </div>
+
     </div>
     <div id="mode-popover" class="toolbar-popover" hidden></div>
     <div id="gear-popover" class="toolbar-popover gear-popover" hidden></div>

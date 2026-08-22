@@ -478,7 +478,10 @@ export type HostMsg =
   // Session-cumulative billing (#53), summed by the host across the session's
   // turns. `turn` is the last prompt's own usage. Both omitted when the CLI sent
   // no `_meta.usage` — the popover then shows only the context row, never zeros.
-  | { type: "usage"; turn?: PromptUsage; session?: PromptUsage; afterUserMessage?: number; afterHistoryEvent?: number };
+  | { type: "usage"; turn?: PromptUsage; session?: PromptUsage; afterUserMessage?: number; afterHistoryEvent?: number }
+  // Autonomous computer-use loop status (desktop host). `status` is a short
+  // end-state reason when the loop stopped (task complete / error / limit).
+  | { type: "computerUseState"; active: boolean; step: number; status?: string };
 
 /** webview -> host */
 export type WebviewMsg =
@@ -737,7 +740,13 @@ export type WebviewMsg =
    *  cannot update the desk. */
   | { type: "openUpdateRelease"; url: string }
   /** Quit and install a downloaded desktop update. Host-local. */
-  | { type: "restartToUpdate" };
+  | { type: "restartToUpdate" }
+  /** Download and install a desktop update in-app (GitHub releases). Host-local. */
+  | { type: "downloadUpdate" }
+  /** Start the autonomous computer-use loop with a task. Host-local. */
+  | { type: "startComputerUse"; task: string }
+  /** Stop the autonomous computer-use loop. Host-local. */
+  | { type: "stopComputerUse" };
 
 // Exhaustive maps: `Record<Union["type"], true>` forces every discriminant to be
 // a key (missing -> tsc error) and forbids any extra (excess-property -> tsc
@@ -761,6 +770,7 @@ const HOST_MESSAGE_TYPE_MAP: Record<HostMsg["type"], true> = {
   setAllToolDetails: true, focusInput: true, restoreComposer: true, truncateMessages: true, uiConfirmRequest: true,
   sessions: true, repoSessions: true, pinnedSessions: true, repos: true, sessionDot: true, queuedSends: true, submitQueuedSend: true,
   steerUnavailable: true, usage: true,
+  computerUseState: true,
 };
 
 const WEBVIEW_MESSAGE_TYPE_MAP: Record<WebviewMsg["type"], true> = {
@@ -786,7 +796,7 @@ const WEBVIEW_MESSAGE_TYPE_MAP: Record<WebviewMsg["type"], true> = {
   newWorktreeSession: true, applyWorktree: true, removeWorktree: true,
   rewindSession: true, editLastMessage: true, uiConfirmAnswer: true, workflowControl: true,
   remoteSignIn: true, remoteSignOut: true, unlinkRemoteDevice: true, openRemotePortal: true,
-  openUpdateRelease: true, restartToUpdate: true, setLanguage: true,
+  openUpdateRelease: true, restartToUpdate: true, downloadUpdate: true, startComputerUse: true, stopComputerUse: true, setLanguage: true,
 };
 
 export const HOST_MESSAGE_TYPES: readonly HostMsg["type"][] = Object.keys(HOST_MESSAGE_TYPE_MAP) as HostMsg["type"][];

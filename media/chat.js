@@ -612,6 +612,9 @@
     // Latest `grok update --check` result for Settings → About: { checking } while
     // in flight, then { current, latest, updateAvailable, error }.
     grokUpdate: null,
+    // Autonomous computer-use loop: whether the host is mid-task.
+    computerUseActive: false,
+    computerUseMode: false,
     // While replaying an older session, suppress a legacy primer user turn and
     // grok's response until the next user message starts.
     suppressReplayTurn: false,
@@ -701,6 +704,7 @@
     brain: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4"/><path d="M9 13a4.5 4.5 0 0 0 3-4"/></svg>`,
     orbit: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.341 6.484A10 10 0 0 1 10.266 21.85"/><path d="M3.659 17.516A10 10 0 0 1 13.74 2.152"/><circle cx="12" cy="12" r="3"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/></svg>`,
     square: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>`,
+    play: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>`,
     spinner: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`,
     gear: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>`,
     // lucide settings-2 (sliders). The composer button wears this once the rail
@@ -1006,6 +1010,8 @@
   updateSendButton(); // spinner by default — session is starting up (busy+locked)
   gearBtn.innerHTML = ICON.gear;
   addBtn.innerHTML = ICON.plus;
+  const computerUseBtnInit = $("computer-use-btn");
+  if (computerUseBtnInit) computerUseBtnInit.innerHTML = ICON.cpu;
   scrollBottomBtn.innerHTML = `${ICON.arrowDown}<span class="scroll-bottom-label">${window.t("chat.composer.scrollToBottom")}</span>`;
   updateModeBtn("agent");
 
@@ -3310,7 +3316,7 @@
     body.className = "rail-update-body";
     body.textContent = ready
       ? "Finish any in-flight agent turn first — a restart does not keep it. The update also installs on the next normal quit, even if you choose Not now."
-      : "Download the new installer and run it over the top of this app. Your settings and conversations are kept.";
+      : "点击下方按钮，应用将自动下载并安装更新。安装完成后会自动重启。";
     const actions = document.createElement("div");
     actions.className = "rail-update-actions";
     const primary = document.createElement("button");
@@ -3323,10 +3329,10 @@
         vscode.postMessage({ type: "restartToUpdate" });
       });
     } else {
-      primary.textContent = window.t("chat.update.openReleasePage");
+      primary.textContent = window.t("chat.update.downloadInstall");
       primary.addEventListener("click", (e) => {
         e.stopPropagation();
-        vscode.postMessage({ type: "openUpdateRelease", url });
+        vscode.postMessage({ type: "downloadUpdate" });
       });
     }
     const dismiss = document.createElement("button");
@@ -3617,6 +3623,27 @@
     if (!addPopover.hidden) { closePopovers(); return; }
     closePopovers();
     addPopover.innerHTML = "";
+    // Computer Use skill (desktop + Grok only — Codex sandboxes shell)
+    if (IS_DESKTOP_CLIENT && state.activeProvider !== "codex") {
+      const cuItem = document.createElement("div");
+      cuItem.className = "toolbar-popover-item";
+      cuItem.innerHTML = `<span class="add-item-icon">${ICON.cpu}</span><span>${window.t("chat.computerUse.title")}</span>`;
+      cuItem.onclick = (e) => {
+        e.stopPropagation();
+        state.computerUseMode = true;
+        const cub = $("computer-use-btn");
+        if (cub) cub.classList.add("active");
+        const inputEl = $("input");
+        if (inputEl) {
+          inputEl.placeholder = window.t("chat.computerUse.placeholder");
+          inputEl.rows = 3;
+          inputEl.focus();
+        }
+        updateSendButton();
+        closePopovers();
+      };
+      addPopover.appendChild(cuItem);
+    }
     const item = document.createElement("div");
     item.className = "toolbar-popover-item";
     item.innerHTML = `<span class="add-item-icon">${ICON.upload}</span><span>Upload from computer</span>`;
@@ -10911,19 +10938,24 @@
     //  - busy + empty composer: stop icon, click → cancel grok mid-stream.
     //    The only cancel affordance, mirroring Claude Code's model.
     sendBtn.classList.remove("stop", "initializing");
-    // Steer (#52) only makes sense while a turn is actually running. Driven as a
-    // body class rather than re-rendering the queued block: this runs on every
-    // keystroke, and rebuilding the block would churn its DOM (and fight the
-    // Edit/Remove buttons) for what is a pure visibility flip.
     document.body.classList.toggle("turn-busy", !!state.busy);
-    // The mode switch (Agent/Plan/Auto-accept) stays available DURING a running
-    // turn (#64): flipping to Auto-accept mid-run is the whole point, and the host
-    // setMode gate is client-side (autoApprove) so it takes effect immediately.
-    // Only the session-start window (busyLocked: spawn → session/new → priming) is
-    // locked, where a setMode would throw "no session"; that flag always clears.
     modeBtn.disabled = state.busyLocked;
     modeBtn.classList.toggle("disabled", state.busyLocked);
     modeBtn.title = modeButtonTitle(state.currentModeId);
+    // Computer-use mode: show Start; while the loop runs, always show Stop
+    // (busy may flicker between multi-step turns).
+    if (state.computerUseActive) {
+      sendBtn.innerHTML = ICON.square;
+      sendBtn.title = window.t("chat.computerUse.stop");
+      sendBtn.disabled = false;
+      return;
+    }
+    if (state.computerUseMode && !state.busy) {
+      sendBtn.innerHTML = ICON.play;
+      sendBtn.title = window.t("chat.computerUse.start");
+      sendBtn.disabled = false;
+      return;
+    }
     if (!state.busy) {
       sendBtn.innerHTML = ICON.arrowUp;
       sendBtn.title = window.t("chat.composer.send");
@@ -11014,6 +11046,11 @@
   }
 
   function sendOrStop() {
+    // Computer-use active: stop on click (do not require busy — multi-step gaps).
+    if (state.computerUseActive) {
+      vscode.postMessage({ type: "stopComputerUse" });
+      return;
+    }
     if (state.busy) {
       // Typed text signals send-intent — queue it; text present never cancels.
       if (queueFromComposer()) return;
@@ -11046,6 +11083,18 @@
     // Sendable = typed text or any visible chip (file or image alike — image
     // chips render as remove-only attachment rows, so they're never hidden).
     if (!text && state.chips.every((c) => c.hidden)) return;
+    // Computer-use mode: send as autonomous task instead of chat
+    if (state.computerUseMode && text) {
+      state.computerUseMode = false;
+      const cub = $("computer-use-btn");
+      if (cub) cub.classList.remove("active");
+      input.value = "";
+      input.placeholder = window.t("chat.composer.placeholder");
+      input.rows = 2;
+      renderInputHighlight();
+      vscode.postMessage({ type: "startComputerUse", task: text });
+      return;
+    }
     stopVoiceForManualSend();
     state.busy = true;
     updateSendButton();
@@ -11675,6 +11724,58 @@
     "providerState", "remoteStatus", "telemetryEnabled", "grokUpdateStatus", "initialized",
   ]);
 
+  function updateComputerUseUI(active, step, status) {
+    state.computerUseActive = !!active;
+    const cub = $("computer-use-btn");
+    const inputEl = $("input");
+    if (active) {
+      if (inputEl) {
+        inputEl.disabled = true;
+        inputEl.placeholder = window.t("chat.computerUse.running", { step: step || 0 });
+      }
+      if (cub) {
+        cub.classList.add("active");
+        cub.title = window.t("chat.computerUse.running", { step: step || 0 });
+      }
+      state.computerUseMode = false;
+    } else {
+      if (inputEl) {
+        inputEl.disabled = false;
+        inputEl.placeholder = window.t("chat.composer.placeholder");
+        inputEl.rows = 2;
+      }
+      if (cub) cub.classList.remove("active");
+      state.computerUseMode = false;
+      syncComputerUseAffordances();
+    }
+    updateSendButton();
+  }
+
+  /** Desktop only: Grok can drive the Mac GUI; Codex sandboxes shell. */
+  function syncComputerUseAffordances() {
+    const cub = $("computer-use-btn");
+    if (!cub || !IS_DESKTOP_CLIENT) return;
+    const allowed = state.activeProvider !== "codex";
+    cub.hidden = false;
+    cub.disabled = !allowed;
+    cub.classList.toggle("disabled", !allowed);
+    if (!state.computerUseActive) {
+      cub.title = allowed
+        ? window.t("chat.computerUse.title")
+        : window.t("chat.computerUse.needGrok", { provider: "Codex" });
+    }
+    if (!allowed && state.computerUseMode) {
+      state.computerUseMode = false;
+      cub.classList.remove("active");
+      const inputEl = $("input");
+      if (inputEl) {
+        inputEl.placeholder = window.t("chat.composer.placeholder");
+        inputEl.rows = 2;
+      }
+      updateSendButton();
+    }
+  }
+
   function handleHostMessage(msg) {
     switch (msg.type) {
       case "initialState":
@@ -11985,6 +12086,10 @@
         refreshSettingsOverlay();
         break;
       }
+      case "computerUseState": {
+        updateComputerUseUI(msg.active === true, typeof msg.step === "number" ? msg.step : 0, msg.status);
+        break;
+      }
       case "configOpened": {
         const kind = msg.kind === "project" ? "project" : "global";
         const path = typeof msg.path === "string" ? msg.path : "";
@@ -12031,6 +12136,7 @@
         state.currentModelId = msg.currentModelId;
         state.activeProvider = msg.provider === "codex" ? "codex" : "grok";
         syncProviderVoice();
+        syncComputerUseAffordances();
         if (state.railTransition?.kind === "new") renderRail();
         state.isWorktree = !!msg.worktree; // gates the gear Apply/Remove worktree items
         state.availableModels = msg.models || [];
@@ -13470,6 +13576,30 @@
   if (welcomeAboutLink) welcomeAboutLink.onclick = (e) => { e.preventDefault(); e.stopPropagation(); openAboutPanel(); };
   addBtn.onclick = (e) => { e.stopPropagation(); openAddPopover(); };
   historyBtn.onclick = (e) => { e.stopPropagation(); openHistoryPopover(); };
+  const computerUseBtn = $("computer-use-btn");
+  if (computerUseBtn) {
+    computerUseBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (computerUseBtn.disabled || state.activeProvider === "codex") return;
+      state.computerUseMode = !state.computerUseMode;
+      computerUseBtn.classList.toggle("active", state.computerUseMode);
+      const inputEl = $("input");
+      if (inputEl) {
+        if (state.computerUseMode) {
+          inputEl.placeholder = window.t("chat.computerUse.placeholder");
+          inputEl.rows = 3;
+        } else {
+          inputEl.placeholder = window.t("chat.composer.placeholder");
+          inputEl.rows = 2;
+        }
+      }
+      updateSendButton();
+    };
+    if (IS_DESKTOP_CLIENT) {
+      computerUseBtn.hidden = false;
+      syncComputerUseAffordances();
+    }
+  }
   repoBtn.onclick = (e) => {
     e.stopPropagation();
     if (repoSwitcherLocked()) return;

@@ -34,7 +34,7 @@
     "promptComplete", "contextUsage", "commandOutput", "expandCommandOutputs", "setAllToolDetails", "focusInput", "restoreComposer", "truncateMessages", "uiConfirmRequest", "agentReset", "agentError", "agentEnd", "exit", "setBusy", "summarizing",
     "sessionContext", "clearMessages", "onboarding", "error", "hostNotice", "xaiNotification", "subagentUpdate", "childStream", "runProgress", "sessions", "repoSessions", "pinnedSessions", "repos",
     "sessionDot", "queuedSends", "submitQueuedSend", "steerUnavailable", "usage", "steerByDefault", "soundNotifications", "processingSound", "readRepliesAloud", "summarizeRepliesAloud", "speechSummary", "imageFull", "moveComposerCaret",
-    "remoteStatus",
+    "remoteStatus", "computerUseState",
   ];
   const WEBVIEW_MESSAGE_TYPES = [
     "ready", "remotePreferences", "send", "newSession", "cancel", "pickModel", "setMode", "removeChip",
@@ -51,7 +51,7 @@
     "setSoundNotifications", "setProcessingSound", "setReadRepliesAloud", "setSummarizeRepliesAloud", "setVoiceSendPhrase", "setVoiceKeyterms", "setTelemetryEnabled", "summarizeSpeech", "requestImageFull", "composerFocus",
     "newWorktreeSession", "applyWorktree", "removeWorktree", "rewindSession", "editLastMessage", "uiConfirmAnswer", "workflowControl",
     "remoteSignIn", "remoteSignOut", "unlinkRemoteDevice", "openRemotePortal",
-    "openUpdateRelease", "restartToUpdate", "setLanguage",
+    "openUpdateRelease", "restartToUpdate", "downloadUpdate", "startComputerUse", "stopComputerUse", "setLanguage",
   ];
   const HOST_MESSAGE_TYPE_SET = new Set(HOST_MESSAGE_TYPES);
   /** True when `type` is a host->webview message the contract knows about. A

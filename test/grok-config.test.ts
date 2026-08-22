@@ -7,6 +7,7 @@ import {
   GLOBAL_CONFIG_STUB,
   isAlwaysApprovePermission,
   modelKeyFromId,
+  modelSupportsVision,
   projectConfigPath,
   PROJECT_CONFIG_STUB,
   readModelSections,
@@ -220,6 +221,26 @@ default = "grok-4.6"
     expect(modelKeyFromId("LongCat-2.0")).toBe("longcat-2.0");
     expect(modelKeyFromId("  Grok 4.6 VISION ")).toBe("grok-4.6-vision");
     expect(modelKeyFromId("😀")).toBe("model");
+  });
+
+  it("modelSupportsVision allows Grok/Codex and vision-marked customs, blocks LongCat-style text models", () => {
+    const customs = readModelSections(TOML);
+    expect(modelSupportsVision("grok-4.6", customs)).toBe(true);
+    expect(modelSupportsVision("grok-build", customs)).toBe(true);
+    expect(modelSupportsVision("", customs)).toBe(true);
+    expect(modelSupportsVision("LongCat-2.0", customs)).toBe(false);
+    expect(modelSupportsVision("longcat", customs)).toBe(false);
+    expect(modelSupportsVision("MiniMax-M3", customs)).toBe(false);
+    expect(
+      modelSupportsVision("step-1o-turbo-vision", [
+        {
+          key: "stepfun",
+          model: "step-1o-turbo-vision",
+          name: "StepFun",
+          description: "第三方：多模态",
+        },
+      ]),
+    ).toBe(true);
   });
 });
 
